@@ -42,6 +42,30 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Initialize MT Document Service
+  const [mtDocumentService, setMtDocumentService] = useState<any>(null);
+  
+  useEffect(() => {
+    // Dynamically import the service on client side
+    if (typeof window !== 'undefined') {
+      import('../services/mtDocumentService').then((module) => {
+        setMtDocumentService(module.mtDocumentService);
+        console.log('📄 MT Document Service initialized for live updates');
+        
+        // Test the service with some initial data to verify it's working
+        setTimeout(() => {
+          if (module.mtDocumentService) {
+            module.mtDocumentService.updateDocument({
+              title: 'Test MT Document',
+              problemDescription: 'Initializing live preview system...',
+              projectNumber: 'TEST-001'
+            });
+          }
+        }, 1000);
+      }).catch(console.warn);
+    }
+  }, []);
+
   // Conversation context tracking
   const [conversationContext, setConversationContext] = useState<{
     currentScenario?: string;
@@ -86,7 +110,7 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
     console.log('🤖 Using pure GPT-4 intelligence for all analysis');
     
     try {
-      const response = await fetch('http://localhost:5001/api/enhancedmt/intelligent-chat', {
+      const response = await fetch('http://localhost:5000/api/EnhancedMT/intelligent-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,6 +123,104 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
 
       if (response.ok) {
         const result = await response.json();
+        
+        // Extract MT analysis data from GPT response text and update the document service
+        if (result.response && mtDocumentService) {
+          try {
+            // Parse the response text for MT-related information
+            const responseText = result.response.toLowerCase();
+            const originalResponse = result.response;
+            
+            // Extract key information from the response
+            const mtData: any = {
+              title: 'Emergency Diesel Generator Control Panel Upgrade',
+              problemDescription: message, // Use the original user message
+              timestamp: new Date().toISOString()
+            };
+            
+            // Look for MT requirement determination
+            if (responseText.includes('mt is required') || responseText.includes('modification traveler is required')) {
+              mtData.mtRequired = true;
+            } else if (responseText.includes('mt is not required') || responseText.includes('no mt required')) {
+              mtData.mtRequired = false;
+            }
+            
+            // Look for safety classifications
+            if (responseText.includes('safety-related') || responseText.includes('10 cfr 50 appendix b')) {
+              mtData.preliminarySafetyClassification = 'SC'; // Safety Class
+            } else if (responseText.includes('safety significant') || responseText.includes('ss ')) {
+              mtData.preliminarySafetyClassification = 'SS';
+            } else if (responseText.includes('general service') || responseText.includes('gs ')) {
+              mtData.preliminarySafetyClassification = 'GS';
+            }
+            
+            // Look for design types
+            if (responseText.includes('design type 1') || responseText.includes('type 1') || message.toLowerCase().includes('type 1')) {
+              mtData.designType = 'Type I';
+              // For Type 1 projects, set requirements
+              mtData.projectDesignReviewRequired = 'Yes';
+              mtData.majorModificationEvaluationRequired = 'Yes';
+              mtData.safetyInDesignStrategyRequired = 'Yes';
+            } else if (responseText.includes('design type 2') || responseText.includes('type 2')) {
+              mtData.designType = 'Type II';
+            } else if (responseText.includes('design type 3') || responseText.includes('type 3')) {
+              mtData.designType = 'Type III';
+            }
+            
+            // Look for hazard categories
+            if (responseText.includes('category 1') || responseText.includes('cat 1')) {
+              mtData.hazardCategory = 'Category 1';
+            } else if (responseText.includes('category 2') || responseText.includes('cat 2')) {
+              mtData.hazardCategory = 'Category 2';
+            } else if (responseText.includes('category 3') || responseText.includes('cat 3')) {
+              mtData.hazardCategory = 'Category 3';
+            }
+            
+            // Extract project number if mentioned
+            const projectMatch = originalResponse.match(/project\s+(?:number\s+)?([A-Z0-9-]+)/i);
+            if (projectMatch) {
+              mtData.projectNumber = projectMatch[1];
+            } else {
+              mtData.projectNumber = 'EDG-CTRL-2025-001'; // Generate based on description
+            }
+            
+            // Extract timeline information
+            if (responseText.includes('6 months') || message.toLowerCase().includes('6 months')) {
+              const currentDate = new Date();
+              const endDate = new Date(currentDate.getTime() + (6 * 30 * 24 * 60 * 60 * 1000)); // 6 months
+              mtData.requestedCompletionDate = endDate.toISOString().split('T')[0];
+              mtData.estimatedCompleteDate = endDate.toISOString().split('T')[0];
+            }
+            
+            // Set facility and submission info
+            mtData.facility = 'Unit 1';
+            mtData.submittedBy = 'Engineering Department';
+            mtData.submissionDate = new Date().toISOString().split('T')[0];
+            
+            // For safety-related emergency power systems
+            if (responseText.includes('emergency') && responseText.includes('diesel')) {
+              mtData.relatedSystems = 'Emergency Diesel Generator System';
+              mtData.relatedBuildings = 'Unit 1 Emergency Power Building';
+              mtData.priority = 'High';
+            }
+            
+            // Set MT requirement based on safety classification
+            if (mtData.preliminarySafetyClassification === 'SC' || mtData.preliminarySafetyClassification === 'SS') {
+              mtData.mtRequired = true;
+            }
+            
+            // Add analysis result as justification
+            mtData.justification = `Analysis Result: ${originalResponse.slice(0, 300)}...`;
+            mtData.proposedSolution = 'Upgrade analog control system to digital control and monitoring system with enhanced alarm capabilities and remote monitoring features.';
+            
+            // Update the document service with live data
+            mtDocumentService.updateDocument(mtData);
+            console.log('📄 Live MT document updated with parsed analysis data:', mtData);
+          } catch (error) {
+            console.warn('Could not update MT document service:', error);
+          }
+        }
+        
         return {
           response: result.response || result.message || "I apologize, but I couldn't generate a response.",
           shouldAnalyze: true

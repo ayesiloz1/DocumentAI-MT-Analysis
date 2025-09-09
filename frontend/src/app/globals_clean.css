@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Import all our professional styling - MUST be before other CSS rules */
+@import url('../styles/variables.css');
+@import url('../styles/professional-layout.css');
+@import url('../styles/platform-navigation.css');
+@import url('../styles/coming-soon.css');
+@import url('../styles/mt-analyzer.css');
+@import url('../styles/mt-analyzer-wrapper.css');
+@import url('../styles/chat.css');
+@import url('../styles/forms.css');
+@import url('../styles/buttons.css');
+@import url('../styles/cards.css');
+@import url('../styles/themes.css');
+@import url('../styles/utilities.css');
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
