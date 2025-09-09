@@ -1,0 +1,321 @@
+# 🚀 DocumentAI MT Analysis System - Git Ignore Configuration
+# Professional nuclear facility development environment
+
+# ==================================================================
+# .NET / C# Backend
+# ==================================================================
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio temporary files
+.vs/
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## User-specific files
+*.userprefs
+
+## Mono Auto Generated Files
+mono_crash.*
+
+## Build Results of an ATL Project
+[Dd]ebugPS/
+[Rr]eleasePS/
+dlldata.c
+
+## Benchmark Results
+BenchmarkDotNet.Artifacts/
+
+## .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## StyleCop
+StyleCopReport.xml
+
+## Files built by Visual Studio
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# ==================================================================
+# Node.js / Next.js Frontend
+# ==================================================================
+## Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+## Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+## Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+## nyc test coverage
+.nyc_output
+
+## Grunt intermediate storage
+.grunt
+
+## Bower dependency directory
+bower_components
+
+## node-waf configuration
+.lock-wscript
+
+## Compiled binary addons
+build/Release
+
+## Dependency directories
+jspm_packages/
+
+## Snowpack dependency directory
+web_modules/
+
+## TypeScript cache
+*.tsbuildinfo
+
+## Optional npm cache directory
+.npm
+
+## Optional eslint cache
+.eslintcache
+
+## Optional stylelint cache
+.stylelintcache
+
+## Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+## Optional REPL history
+.node_repl_history
+
+## Output of 'npm pack'
+*.tgz
+
+## Yarn Integrity file
+.yarn-integrity
+
+## Next.js
+.next/
+out/
+
+## Nuxt.js
+.nuxt
+dist/
+
+## Storybook build outputs
+.out
+.storybook-out
+storybook-static/
+
+## Temporary folders
+tmp/
+temp/
+
+# ==================================================================
+# Security & Configuration
+# ==================================================================
+## Environment Variables (CRITICAL FOR NUCLEAR FACILITIES)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+## Application Settings (SENSITIVE AZURE OPENAI KEYS)
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+
+## Secret Configuration
+secrets.json
+*.secrets.json
+
+## Azure Key Vault
+.azure/
+
+## API Keys and Tokens
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+# ==================================================================
+# Nuclear Facility Specific
+# ==================================================================
+## Generated MT Documents
+generated-documents/
+mt-outputs/
+*.docx
+*.pdf
+
+## Test Data
+test-scenarios/sensitive/
+real-plant-data/
+
+## Nuclear Regulatory
+fsar-confidential/
+plant-specific/
+proprietary/
+
+# ==================================================================
+# Development Tools
+# ==================================================================
+## OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+## IDEs
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+## JetBrains
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# ==================================================================
+# Documentation & Reports
+# ==================================================================
+## Generated Documentation
+docs/generated/
+reports/
+*.log
+
+## Backup Files
+*.bak
+*.backup
+*.old
+
+# ==================================================================
+# Nuclear Quality Assurance
+# ==================================================================
+## QA Documentation (Keep templates, ignore filled versions)
+qa-records/filled/
+audit-trails/
+compliance-reports/generated/
+
+# ==================================================================
+# Performance & Testing
+# ==================================================================
+## Test Results
+TestResults/
+[Tt]est[Rr]esult*/
+*.coverage
+*.coveragexml
+
+## Performance Tests
+BenchmarkDotNet.Artifacts/
+PerfLogs/
+
+# ==================================================================
+# Special Nuclear Facility Considerations
+# ==================================================================
+## NEVER COMMIT THESE FILES
+plant-configuration.json
+reactor-parameters.json
+safety-systems-config.json
+real-modifications.json
+
+## Simulation Results
+simulation-outputs/
+thermal-hydraulic-results/
+safety-analysis-reports/
+
+# ==================================================================
+# Build Artifacts
+# ==================================================================
+## Package Files
+*.nupkg
+*.snupkg
+*.tgz
+*.tar.gz
+
+## Installer Files
+*.msi
+*.exe
+!tools/**/*.exe
+
+# ==================================================================
+# Temporary Files
+# ==================================================================
+## System Temporary
+*.tmp
+*.swp
+*.swo
+*~.nib
+local.properties
+
+## Application Temporary
+temp/
+cache/
+logs/

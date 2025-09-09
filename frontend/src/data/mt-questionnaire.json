@@ -1,0 +1,439 @@
+{
+  "modificationTravelerQuestionnaire": {
+    "version": "1.0",
+    "description": "Comprehensive MT analysis questionnaire based on DOE/Hanford MT-50231 template",
+    "sections": [
+      {
+        "sectionNumber": 1,
+        "sectionTitle": "REQUEST FOR MODIFICATION",
+        "questions": [
+          {
+            "id": "mt_number",
+            "question": "What is your MT number (if assigned)?",
+            "type": "text",
+            "required": false,
+            "placeholder": "e.g., MT-50231"
+          },
+          {
+            "id": "title",
+            "question": "Provide a descriptive title for this modification:",
+            "type": "text",
+            "required": true,
+            "placeholder": "e.g., A/AX Retrieval Project - Chemical Addition Manifold Frame"
+          },
+          {
+            "id": "completion_date",
+            "question": "Requested completion date (optional):",
+            "type": "date",
+            "required": false
+          },
+          {
+            "id": "cacn",
+            "question": "CACN (Cost Account Charge Number):",
+            "type": "text",
+            "required": false,
+            "placeholder": "e.g., 202991"
+          },
+          {
+            "id": "project_number",
+            "question": "Project Number:",
+            "type": "text",
+            "required": false,
+            "placeholder": "e.g., T2R02"
+          },
+          {
+            "id": "design_type",
+            "question": "Select the Design Type (based on TFC-ENG-DESIGN-C-67):",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "I", "label": "Type I - New facility or major system modification" },
+              { "value": "II", "label": "Type II - Minor system modification" },
+              { "value": "III", "label": "Type III - Component replacement with design changes" },
+              { "value": "IV", "label": "Type IV - Temporary modification" },
+              { "value": "V", "label": "Type V - Identical replacement" },
+              { "value": "VI", "label": "Type VI - Minor repair or maintenance" }
+            ]
+          },
+          {
+            "id": "project_type",
+            "question": "Project Type:",
+            "type": "text",
+            "required": true,
+            "placeholder": "e.g., Retrieval, Waste Processing, Infrastructure"
+          }
+        ]
+      },
+      {
+        "sectionNumber": 2,
+        "sectionTitle": "RELATED STRUCTURES, SYSTEMS, AND COMPONENTS",
+        "questions": [
+          {
+            "id": "related_buildings",
+            "question": "Related Building/Facilities:",
+            "type": "textarea",
+            "required": false,
+            "placeholder": "List affected buildings, tanks, or facilities"
+          },
+          {
+            "id": "related_systems",
+            "question": "Related Systems:",
+            "type": "textarea",
+            "required": false,
+            "placeholder": "List affected systems (e.g., HVAC, electrical, instrumentation)"
+          },
+          {
+            "id": "related_equipment",
+            "question": "Related Equipment ID Numbers (EIN):",
+            "type": "textarea",
+            "required": false,
+            "placeholder": "e.g., 241-A-285, 241-CHEMB"
+          }
+        ]
+      },
+      {
+        "sectionNumber": 3,
+        "sectionTitle": "PROBLEM DESCRIPTION AND JUSTIFICATION",
+        "questions": [
+          {
+            "id": "problem_description",
+            "question": "Describe the problem or need that requires this modification:",
+            "type": "textarea",
+            "required": true,
+            "rows": 5,
+            "placeholder": "Provide detailed description of the issue, deficiency, or requirement driving this modification"
+          },
+          {
+            "id": "justification",
+            "question": "Provide justification for this modification:",
+            "type": "textarea",
+            "required": true,
+            "rows": 4,
+            "placeholder": "Explain why this modification is necessary and how it addresses the problem"
+          }
+        ]
+      },
+      {
+        "sectionNumber": 4,
+        "sectionTitle": "DESIGN TYPE 1 REQUIREMENTS",
+        "questions": [
+          {
+            "id": "design_review_required",
+            "question": "Is Project Design Review Required (TFC-ENG-DESIGN-D-17.1)?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" },
+              { "value": "na", "label": "N/A" }
+            ],
+            "conditional": {
+              "depends_on": "design_type",
+              "show_when": ["I"]
+            }
+          },
+          {
+            "id": "major_modification_evaluation",
+            "question": "Is Major Modification Evaluation Required (Use 1189 Checklist)?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" },
+              { "value": "na", "label": "N/A" }
+            ],
+            "conditional": {
+              "depends_on": "design_type",
+              "show_when": ["I"]
+            }
+          },
+          {
+            "id": "safety_in_design_strategy",
+            "question": "Is Safety In Design Strategy Required?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" },
+              { "value": "na", "label": "N/A" }
+            ],
+            "conditional": {
+              "depends_on": "design_type",
+              "show_when": ["I"]
+            }
+          }
+        ]
+      },
+      {
+        "sectionNumber": 5,
+        "sectionTitle": "PROPOSED SOLUTION",
+        "questions": [
+          {
+            "id": "proposed_solution",
+            "question": "Describe your proposed solution in detail:",
+            "type": "textarea",
+            "required": true,
+            "rows": 5,
+            "placeholder": "Provide comprehensive description of the proposed modification, including technical approach, methodology, and implementation plan"
+          }
+        ]
+      },
+      {
+        "sectionNumber": 6,
+        "sectionTitle": "DESIGN INPUTS",
+        "questions": [
+          {
+            "id": "design_inputs",
+            "question": "List all design input documents (drawings, specifications, calculations, procedures):",
+            "type": "dynamic_table",
+            "required": false,
+            "columns": [
+              { "name": "document_type", "label": "Type", "placeholder": "MECHANICAL, ELECTRICAL, etc." },
+              { "name": "document_number", "label": "Document Number", "placeholder": "H-14-022209" },
+              { "name": "revision", "label": "Rev.", "placeholder": "00" },
+              { "name": "title", "label": "Title", "placeholder": "Document title" }
+            ]
+          },
+          {
+            "id": "design_considerations",
+            "question": "Other Design Input Considerations:",
+            "type": "textarea",
+            "required": false,
+            "rows": 4,
+            "placeholder": "List additional design requirements, constraints, interfaces, or considerations"
+          }
+        ]
+      },
+      {
+        "sectionNumber": 7,
+        "sectionTitle": "SAFETY AND ENVIRONMENTAL CLASSIFICATION",
+        "questions": [
+          {
+            "id": "safety_classification",
+            "question": "Preliminary Safety Classification:",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "SC", "label": "SC - Safety Class" },
+              { "value": "SS", "label": "SS - Safety Significant" },
+              { "value": "GS", "label": "GS - General Service" },
+              { "value": "NA", "label": "N/A - Not Applicable" }
+            ]
+          },
+          {
+            "id": "environmental_risk",
+            "question": "Does this modification involve Environmental Risk (TFC-ENG-DESIGN-C-52 Att. D)?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" }
+            ]
+          },
+          {
+            "id": "radiological_risk",
+            "question": "Does this modification involve Radiological Risk (TFC-ENG-DESIGN-C-52 Att. D)?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" }
+            ]
+          },
+          {
+            "id": "hazard_category",
+            "question": "Hazard Category:",
+            "type": "select",
+            "required": false,
+            "options": [
+              { "value": "1", "label": "Category 1 - High Hazard" },
+              { "value": "2", "label": "Category 2 - Moderate Hazard" },
+              { "value": "3", "label": "Category 3 - Low Hazard" },
+              { "value": "NA", "label": "N/A" }
+            ]
+          },
+          {
+            "id": "approval_designators",
+            "question": "Approval Designators (select all that apply):",
+            "type": "checkbox",
+            "required": false,
+            "options": [
+              { "value": "E", "label": "E - Environmental" },
+              { "value": "S", "label": "S - Safety" },
+              { "value": "Q", "label": "Q - Quality" },
+              { "value": "N", "label": "N - Nuclear Safety" }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionNumber": 8,
+        "sectionTitle": "IMPACTS ASSESSMENT",
+        "questions": [
+          {
+            "id": "impacted_documents",
+            "question": "List documents that will be impacted by this modification:",
+            "type": "dynamic_table",
+            "required": false,
+            "columns": [
+              { "name": "document_type", "label": "Type", "placeholder": "Procedure, Drawing, etc." },
+              { "name": "document_number", "label": "Document Number", "placeholder": "Document ID" },
+              { "name": "revision", "label": "Current Rev.", "placeholder": "00" },
+              { "name": "title", "label": "Title", "placeholder": "Document title" },
+              { "name": "impact_description", "label": "Impact Description", "placeholder": "Nature of required changes" }
+            ]
+          },
+          {
+            "id": "other_impacts",
+            "question": "Describe other impacts (operational, maintenance, training, etc.):",
+            "type": "textarea",
+            "required": false,
+            "rows": 3,
+            "placeholder": "List other potential impacts such as operational procedures, training requirements, maintenance impacts, etc."
+          }
+        ]
+      },
+      {
+        "sectionNumber": 9,
+        "sectionTitle": "PHYSICAL CHANGE ASSESSMENT",
+        "questions": [
+          {
+            "id": "is_physical_change",
+            "question": "Does this modification involve a physical change to structures, systems, or components?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" }
+            ]
+          },
+          {
+            "id": "is_temporary",
+            "question": "Is this a temporary modification?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" }
+            ]
+          },
+          {
+            "id": "is_identical_replacement",
+            "question": "Is this an identical replacement (form, fit, function)?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" }
+            ]
+          },
+          {
+            "id": "requires_new_procedures",
+            "question": "Does this modification require new or revised procedures?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" }
+            ]
+          },
+          {
+            "id": "multiple_design_authorities",
+            "question": "Does this modification involve multiple design authorities?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" }
+            ]
+          },
+          {
+            "id": "requires_hoisting_rigging",
+            "question": "Does this modification require hoisting and rigging analysis?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionNumber": 10,
+        "sectionTitle": "REGULATORY AND COMPLIANCE",
+        "questions": [
+          {
+            "id": "cfr_5059_evaluation",
+            "question": "Does this modification require 10 CFR 50.59 evaluation?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" },
+              { "value": "tbd", "label": "To Be Determined" }
+            ]
+          },
+          {
+            "id": "license_amendment_required",
+            "question": "Do you anticipate this modification will require a license amendment?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" },
+              { "value": "tbd", "label": "To Be Determined" }
+            ]
+          },
+          {
+            "id": "safety_function_impact",
+            "question": "Could this modification adversely affect any safety function?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" },
+              { "value": "tbd", "label": "To Be Determined" }
+            ]
+          },
+          {
+            "id": "accident_analysis_impact",
+            "question": "Could this modification affect any accident analysis or create new accident scenarios?",
+            "type": "radio",
+            "required": true,
+            "options": [
+              { "value": "yes", "label": "Yes" },
+              { "value": "no", "label": "No" },
+              { "value": "tbd", "label": "To Be Determined" }
+            ]
+          }
+        ]
+      }
+    ],
+    "validation_rules": {
+      "required_sections": [1, 3, 5, 7, 9, 10],
+      "conditional_sections": {
+        "design_type_1_requirements": {
+          "show_when": {
+            "design_type": ["I"]
+          }
+        }
+      }
+    },
+    "guidance_text": {
+      "design_types": {
+        "I": "Major modifications requiring comprehensive design review, safety analysis, and potentially regulatory approval.",
+        "II": "Minor modifications with limited scope and well-understood impacts.",
+        "III": "Component replacements involving design changes or upgrades.",
+        "IV": "Temporary modifications with planned restoration to original configuration.",
+        "V": "Identical replacements with no change in form, fit, or function.",
+        "VI": "Minor repairs or maintenance activities with minimal documentation requirements."
+      },
+      "safety_classifications": {
+        "SC": "Safety Class items prevent or mitigate accidents that could result in significant radiological consequences.",
+        "SS": "Safety Significant items prevent or mitigate accidents with lesser radiological consequences.",
+        "GS": "General Service items have no significant safety function."
+      }
+    }
+  }
+}

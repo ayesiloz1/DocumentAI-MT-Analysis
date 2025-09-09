@@ -1,0 +1,325 @@
+/* =========================================
+   THEME CONFIGURATION
+   Easy customization file for quick theme changes
+   ========================================= */
+
+/* 
+   INSTRUCTIONS:
+   1. Uncomment any theme below to apply it
+   2. Modify values to create your custom theme
+   3. Add new themes by copying the structure
+   4. Import this file after variables.css in index.css
+*/
+
+/* =========================================
+   THEME 1: NUCLEAR BLUE (Default)
+   Professional blue theme for nuclear industry
+   ========================================= */
+
+/* =========================================
+   THEME 1: PROFESSIONAL CORPORATE (Default)
+   Sophisticated, minimal, enterprise-grade theme
+   ========================================= */
+
+:root {
+  /* Primary: Professional Blue-Gray */
+  --color-primary-500: #475569;
+  --color-primary-600: #334155;
+  --color-primary-700: #1e293b;
+  
+  /* Secondary: Subtle Teal */
+  --color-secondary-500: #0891b2;
+  --color-secondary-600: #0e7490;
+  
+  /* Accent: Minimal Orange (for warnings only) */
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  
+  /* Success: Professional Green */
+  --color-success-500: #059669;
+  --color-success-600: #047857;
+  
+  /* Error: Muted Red */
+  --color-error-500: #dc2626;
+  --color-error-600: #b91c1c;
+  
+  /* Enhanced Gray Palette for Professional Look */
+  --color-gray-25: #fcfcfd;
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+
+  /* === SEMANTIC COLOR MAPPINGS === */
+  /* These variables are used throughout the application for consistency */
+  
+  /* Primary */
+  --primary-color: var(--color-primary-600);
+  --primary-hover: var(--color-primary-700);
+  --primary-light: var(--color-primary-500);
+  
+  /* Surface Colors */
+  --surface-color: #ffffff;
+  --background-color: var(--color-gray-50);
+  --background-secondary: var(--color-gray-100);
+  
+  /* Text Colors */
+  --text-primary: var(--color-gray-900);
+  --text-secondary: var(--color-gray-600);
+  --text-muted: var(--color-gray-400);
+  
+  /* Border Colors */
+  --border-color: var(--color-gray-200);
+  --border-light: var(--color-gray-100);
+  
+  /* Status Colors */
+  --success-color: var(--color-success-500);
+  --warning-color: var(--color-warning-500);
+  --error-color: var(--color-error-500);
+  --info-color: var(--color-secondary-500);
+  
+  /* Status Backgrounds */
+  --success-background: var(--color-success-50);
+  --warning-background: var(--color-warning-50);
+  --error-background: var(--color-error-50);
+  --info-background: var(--color-info-50);
+  
+  /* Status Borders */
+  --success-border: var(--color-success-200);
+  --warning-border: var(--color-warning-200);
+  --error-border: var(--color-error-200);
+  --info-border: var(--color-info-200);
+  
+  /* Typography */
+  --font-sans: var(--font-family-sans);
+  --font-mono: var(--font-family-mono);
+  
+  /* Sizing */
+  --border-radius: var(--border-radius-md);
+  --border-radius-large: var(--border-radius-lg);
+}
+
+/* =========================================
+   THEME 2: STEEL GRAY (Uncomment to use)
+   Industrial steel gray theme
+   ========================================= */
+
+/* 
+:root {
+  --color-primary-500: #64748b;
+  --color-primary-600: #475569;
+  --color-secondary-500: #0891b2;
+  --color-secondary-600: #0e7490;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+}
+*/
+
+/* =========================================
+   THEME 3: FOREST GREEN (Uncomment to use)
+   Environmental/sustainability theme
+   ========================================= */
+
+/* 
+:root {
+  --color-primary-500: #059669;
+  --color-primary-600: #047857;
+  --color-secondary-500: #0d9488;
+  --color-secondary-600: #0f766e;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+}
+*/
+
+/* =========================================
+   THEME 4: DEEP PURPLE (Uncomment to use)
+   Modern tech/enterprise theme
+   ========================================= */
+
+/* 
+:root {
+  --color-primary-500: #7c3aed;
+  --color-primary-600: #6d28d9;
+  --color-secondary-500: #0891b2;
+  --color-secondary-600: #0e7490;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+}
+*/
+
+/* =========================================
+   THEME 5: CRIMSON RED (Uncomment to use)
+   High-energy/emergency theme
+   ========================================= */
+
+/* 
+:root {
+  --color-primary-500: #dc2626;
+  --color-primary-600: #b91c1c;
+  --color-secondary-500: #059669;
+  --color-secondary-600: #047857;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+}
+*/
+
+/* =========================================
+   THEME 6: MIDNIGHT BLUE (Uncomment to use)
+   Dark professional theme
+   ========================================= */
+
+/* 
+:root {
+  --color-primary-500: #1e40af;
+  --color-primary-600: #1e3a8a;
+  --color-secondary-500: #0891b2;
+  --color-secondary-600: #0e7490;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+}
+*/
+
+/* =========================================
+   CUSTOM COMPONENT OVERRIDES
+   Specific styling tweaks for different themes
+   ========================================= */
+
+/* Chat Interface Theme Adjustments */
+.chat-container {
+  /* Theme customizations - uncomment as needed */
+  /* background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-primary-50) 100%); */
+  position: relative; /* Placeholder to avoid empty ruleset */
+}
+
+.chat-header {
+  /* Theme customizations - uncomment as needed */
+  /* background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%); */
+  /* color: white; */
+  position: relative; /* Placeholder to avoid empty ruleset */
+}
+
+/* MT Document Theme Adjustments */
+.mt-document-header {
+  /* Theme customizations - uncomment as needed */
+  /* background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-secondary-600) 100%); */
+  position: relative; /* Placeholder to avoid empty ruleset */
+}
+
+/* Button Theme Adjustments */
+.btn--primary {
+  /* Theme customizations - uncomment as needed */
+  /* box-shadow: 0 4px 14px 0 rgba(var(--color-primary-500), 0.39); */
+  /* border: none; */
+  position: relative; /* Placeholder to avoid empty ruleset */
+}
+
+/* Card Theme Adjustments */
+.card {
+  /* Theme customizations - uncomment as needed */
+  /* border: 1px solid var(--color-primary-100); */
+  /* background: linear-gradient(135deg, white 0%, var(--color-gray-50) 100%); */
+  position: relative; /* Placeholder to avoid empty ruleset */
+}
+
+/* =========================================
+   SEASONAL/SPECIAL THEMES
+   ========================================= */
+
+/* Holiday Theme (Uncomment during holidays) */
+/* 
+.mt-document-header {
+  background: linear-gradient(135deg, #dc2626 0%, #059669 50%, #dc2626 100%);
+}
+*/
+
+/* High Contrast Mode (Accessibility) */
+@media (prefers-contrast: high) {
+  :root {
+    --color-primary-500: #0000ff;
+    --color-secondary-500: #008000;
+    --color-error-500: #ff0000;
+    --color-warning-500: #ff8c00;
+    --color-gray-700: #000000;
+    --color-gray-300: #ffffff;
+  }
+}
+
+/* =========================================
+   ORGANIZATION-SPECIFIC BRANDING
+   Customize for your organization
+   ========================================= */
+
+/* 
+// Example: Department of Energy Branding
+:root {
+  --color-primary-500: #1f4e79;    // DOE Blue
+  --color-secondary-500: #4a90a4;   // DOE Light Blue
+  --color-warning-500: #ff6900;     // DOE Orange
+}
+
+// Example: Nuclear Regulatory Commission
+:root {
+  --color-primary-500: #003366;     // NRC Navy
+  --color-secondary-500: #336699;   // NRC Blue
+  --color-warning-500: #cc3300;     // NRC Red
+}
+*/
+
+/* =========================================
+   PRINT THEME OVERRIDES
+   ========================================= */
+
+@media print {
+  :root {
+    /* Ensure good contrast for printing */
+    --color-primary-500: #000000;
+    --color-secondary-500: #333333;
+    --color-gray-700: #000000;
+    --color-gray-500: #333333;
+  }
+  
+  .mt-document-header {
+    background: #f8f9fa !important;
+    color: #000000 !important;
+    border-bottom: 2px solid #000000;
+  }
+}
+
+/* =========================================
+   USAGE INSTRUCTIONS
+   ========================================= */
+
+/*
+TO APPLY A THEME:
+1. Uncomment the theme section you want to use
+2. Comment out or remove other active themes
+3. Save the file and refresh your browser
+4. The entire application will use the new theme
+
+TO CREATE A CUSTOM THEME:
+1. Copy one of the existing theme blocks
+2. Modify the color values to your preferences
+3. Test the theme across different components
+4. Save your custom theme with a descriptive name
+
+TO SWITCH THEMES DYNAMICALLY:
+1. Add data-theme attribute to html element
+2. Use JavaScript to toggle between themes
+3. Define theme-specific CSS variables under [data-theme="theme-name"]
+
+THEME TESTING CHECKLIST:
+□ Check all button variants (primary, secondary, outline, ghost)
+□ Test card components (elevated, flat, status variants)
+□ Verify form elements (inputs, selects, validation states)
+□ Review chat interface (messages, avatars, loading states)
+□ Examine MT documents (headers, sections, status indicators)
+□ Test responsive design on mobile devices
+□ Check accessibility with screen readers
+□ Verify print styles look professional
+*/
