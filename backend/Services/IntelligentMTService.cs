@@ -1,50 +1,87 @@
-using Azure.AI.OpenAI;
-using Azure;
-using MTAnalyzer.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
-using System.Text;
+// Import necessary namespaces for Azure OpenAI and application functionality
+using Azure.AI.OpenAI;              // Azure OpenAI SDK for GPT integration
+using Azure;                        // Azure SDK core types like AzureKeyCredential
+using MTAnalyzer.Models;            // Our application data models
+using Microsoft.Extensions.Configuration; // Configuration management (appsettings.json)
+using Microsoft.Extensions.Logging;       // Logging framework for debugging and monitoring
+using System.Text.Json;                   // JSON serialization for API communication
+using System.Text;                        // String manipulation utilities
 
 namespace MTAnalyzer.Services
 {
+    // ============================================================================
+    // INTERFACE DEFINITION FOR INTELLIGENT MT SERVICE
+    // This defines the contract that our service must implement
+    // Interfaces enable dependency injection and make testing easier
+    // ============================================================================
     public interface IIntelligentMTService
     {
+        // Analyze MT documents using GPT-4 with optional structured input
         Task<MTAnalysisReport> AnalyzeWithGPT4Async(string userInput, ModificationTravelerInput? structuredInput = null);
+        
+        // Generate intelligent conversational responses for chat interface
         Task<string> GenerateIntelligentResponseAsync(string userMessage, string conversationHistory = "");
+        
+        // Classify the type of MT document based on description
         Task<MTClassificationResult> ClassifyMTTypeAsync(string description);
+        
+        // Extract equipment details from descriptions using AI
         Task<List<string>> ExtractEquipmentDetailsAsync(string description);
+        
+        // Generate recommendations based on analysis results
         Task<string> GenerateRecommendationsAsync(MTAnalysisReport analysis);
     }
 
+    // ============================================================================
+    // INTELLIGENT MT SERVICE IMPLEMENTATION
+    // This service handles all AI-powered MT document analysis using GPT-4
+    // It's the core business logic that connects user requests to AI responses
+    // ============================================================================
     public class IntelligentMTService : IIntelligentMTService
     {
-        private readonly OpenAIClient _openAIClient;
-        private readonly IConfiguration _configuration;
-        private readonly ILogger<IntelligentMTService> _logger;
-        private readonly IEmbeddingService _embeddingService;
-        private readonly string _gpt4DeploymentName;
-        private readonly string _gpt4TurboDeploymentName;
+        // ============================================================================
+        // PRIVATE FIELDS - DEPENDENCIES INJECTED THROUGH CONSTRUCTOR
+        // ============================================================================
+        private readonly OpenAIClient _openAIClient;              // Azure OpenAI client for API calls
+        private readonly IConfiguration _configuration;           // Configuration settings from appsettings.json
+        private readonly ILogger<IntelligentMTService> _logger;   // Logger for debugging and monitoring
+        private readonly IEmbeddingService _embeddingService;     // Service for text embeddings (similarity matching)
+        private readonly string _gpt4DeploymentName;             // Name of GPT-4 deployment in Azure
+        private readonly string _gpt4TurboDeploymentName;        // Name of GPT-4 Turbo deployment for faster responses
 
+        // ============================================================================
+        // CONSTRUCTOR - DEPENDENCY INJECTION AND INITIALIZATION
+        // ASP.NET Core automatically injects these dependencies when creating the service
+        // ============================================================================
         public IntelligentMTService(
-            IConfiguration configuration, 
-            ILogger<IntelligentMTService> logger,
-            IEmbeddingService embeddingService)
+            IConfiguration configuration,              // Injected configuration service
+            ILogger<IntelligentMTService> logger,      // Injected logging service
+            IEmbeddingService embeddingService         // Injected embedding service
+        )
         {
+            // Store injected dependencies for use in methods
             _configuration = configuration;
             _logger = logger;
             _embeddingService = embeddingService;
 
-            var endpoint = _configuration["AzureOpenAI:Endpoint"];
-            var apiKey = _configuration["AzureOpenAI:ApiKey"];
+            // Read Azure OpenAI connection details from configuration
+            var endpoint = _configuration["AzureOpenAI:Endpoint"];  // Azure OpenAI endpoint URL
+            var apiKey = _configuration["AzureOpenAI:ApiKey"];      // Azure OpenAI API key
 
+            // Create the OpenAI client with endpoint and credentials
+            // This client will be used for all GPT-4 API calls
             _openAIClient = new OpenAIClient(new Uri(endpoint!), new AzureKeyCredential(apiKey!));
             
-            // Get GPT-4 deployment names from config
+            // Get GPT-4 deployment names from configuration with fallback defaults
+            // These deployments must exist in your Azure OpenAI resource
             _gpt4DeploymentName = _configuration["AzureOpenAI:ChatDeploymentName"] ?? "gpt-4";
             _gpt4TurboDeploymentName = _configuration["AzureOpenAI:FastChatDeploymentName"] ?? "gpt-4-turbo";
         }
 
+        // ============================================================================
+        // MAIN ANALYSIS METHOD - ANALYZE MT DOCUMENTS WITH GPT-4
+        // This is the core method that processes user input and generates MT analysis
+        // ============================================================================
         public async Task<MTAnalysisReport> AnalyzeWithGPT4Async(string userInput, ModificationTravelerInput? structuredInput = null)
         {
             try

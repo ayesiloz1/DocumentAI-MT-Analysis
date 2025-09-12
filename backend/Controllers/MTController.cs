@@ -1,52 +1,95 @@
-using MTAnalyzer.Models;
-using MTAnalyzer.Services;
-using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+// Import necessary namespaces
+using MTAnalyzer.Models;         // Our data models (request/response classes)
+using MTAnalyzer.Services;       // Our business logic services
+using Microsoft.AspNetCore.Mvc; // ASP.NET Core MVC framework for creating APIs
+using System.Text.Json;          // JSON serialization and deserialization
 
 namespace MTAnalyzer.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
+    // ============================================================================
+    // API CONTROLLER FOR MT DOCUMENT ANALYSIS
+    // This controller handles all HTTP requests related to MT document processing
+    // ============================================================================
+    
+    [ApiController]              // Indicates this is an API controller with automatic model validation
+    [Route("api/[controller]")]  // Sets the base route to "api/MT" (controller name without "Controller" suffix)
     public class MTController : ControllerBase
     {
-        private readonly IAzureOpenAIService _aiService;
-        private readonly IMTDecisionEngine _decisionEngine;
-        private readonly IIntelligentMTService _intelligentService;
+        // ============================================================================
+        // DEPENDENCY INJECTION - SERVICES USED BY THIS CONTROLLER
+        // These services are injected by the ASP.NET Core dependency injection container
+        // ============================================================================
+        
+        private readonly IAzureOpenAIService _aiService;        // Service for Azure OpenAI API calls
+        private readonly IMTDecisionEngine _decisionEngine;     // Service for MT decision tree logic
+        private readonly IIntelligentMTService _intelligentService; // Main service for intelligent document analysis
 
+        // Constructor - ASP.NET Core automatically injects the required services
+        // The services are registered in Program.cs and created when needed
         public MTController(
-            IAzureOpenAIService aiService, 
-            IMTDecisionEngine decisionEngine,
-            IIntelligentMTService intelligentService)
+            IAzureOpenAIService aiService,           // Injected Azure OpenAI service
+            IMTDecisionEngine decisionEngine,        // Injected decision engine service
+            IIntelligentMTService intelligentService // Injected intelligent MT service
+        )
         {
+            // Store the injected services in private fields for use in action methods
             _aiService = aiService;
             _decisionEngine = decisionEngine;
             _intelligentService = intelligentService;
         }
 
-        [HttpPost("analyze-with-gpt4")]
+        // ============================================================================
+        // API ENDPOINT: ANALYZE DOCUMENT WITH GPT-4
+        // POST: api/MT/analyze-with-gpt4
+        // Purpose: Analyzes MT documents using GPT-4 with structured input
+        // ============================================================================
+        
+        [HttpPost("analyze-with-gpt4")]  // HTTP POST endpoint at "api/MT/analyze-with-gpt4"
         public async Task<ActionResult<MTAnalysisReport>> AnalyzeWithGPT4Async([FromBody] IntelligentAnalysisRequest request)
         {
             try
             {
-                var result = await _intelligentService.AnalyzeWithGPT4Async(request.UserInput, request.StructuredInput);
+                // Call the intelligent service to analyze the document using GPT-4
+                // This combines user input with structured data for comprehensive analysis
+                var result = await _intelligentService.AnalyzeWithGPT4Async(
+                    request.UserInput,      // Free-text description from user
+                    request.StructuredInput // Structured form data if available
+                );
+                
+                // Return HTTP 200 OK with the analysis result
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message, details = "GPT-4 analysis failed" });
+                // If anything goes wrong, return HTTP 500 Internal Server Error
+                // Include error details for debugging (remove in production)
+                return StatusCode(500, new { 
+                    error = ex.Message, 
+                    details = "GPT-4 analysis failed" 
+                });
             }
         }
 
-        [HttpPost("intelligent-chat")]
+        // ============================================================================
+        // API ENDPOINT: INTELLIGENT CHAT INTERFACE
+        // POST: api/MT/intelligent-chat
+        // Purpose: Handles conversational AI interaction for MT document analysis
+        // ============================================================================
+        
+        [HttpPost("intelligent-chat")]  // HTTP POST endpoint at "api/MT/intelligent-chat"
         public async Task<ActionResult<IntelligentChatResponse>> IntelligentChatAsync([FromBody] IntelligentChatRequest request)
         {
             try
             {
+                // Log the incoming request for debugging and monitoring
                 Console.WriteLine($"🎯 RECEIVED INTELLIGENT CHAT REQUEST: {request.Message}");
                 
+                // Generate an intelligent response using GPT-4
+                // This maintains conversation context and provides smart MT document analysis
                 var response = await _intelligentService.GenerateIntelligentResponseAsync(
-                    request.Message, 
-                    request.ConversationHistory);
+                    request.Message,             // Current user message
+                    request.ConversationHistory  // Previous conversation for context
+                );
 
                 Console.WriteLine($"✅ INTELLIGENT CHAT RESPONSE GENERATED");
                 return Ok(new IntelligentChatResponse

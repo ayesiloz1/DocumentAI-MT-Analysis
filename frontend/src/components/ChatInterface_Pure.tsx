@@ -1,23 +1,50 @@
+// ============================================================================
+// REACT CLIENT COMPONENT DIRECTIVE
+// 'use client' tells Next.js this is a client-side component that runs in the browser
+// This is required for components that use React hooks and browser APIs
+// ============================================================================
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, FileUp, Bot, User, AlertCircle, CheckCircle, FileText } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import MTDocumentModal from './MTDocumentModal';
+// ============================================================================
+// IMPORT STATEMENTS - EXTERNAL LIBRARIES AND COMPONENTS
+// ============================================================================
+import React, { useState, useRef, useEffect } from 'react'; // React hooks for state and lifecycle management
+import { Send, FileUp, Bot, User, AlertCircle, CheckCircle, FileText, Copy, Edit } from 'lucide-react'; // Icon components
+import ReactMarkdown from 'react-markdown';  // Component to render Markdown text as HTML
+import MTDocumentModal from './MTDocumentModal'; // Custom modal component for displaying MT documents
+import '../styles/components/index.css'; // Import CSS styles
 
-// Helper functions for intelligent extraction
+// ============================================================================
+// HELPER FUNCTIONS FOR INTELLIGENT DATA EXTRACTION
+// These functions parse user messages and AI responses to extract meaningful information
+// for pre-filling MT document fields automatically
+// ============================================================================
+
+/**
+ * Extracts modification title from user message and AI response
+ * Uses pattern matching to identify common modification types
+ * @param userMessage - The user's input message
+ * @param aiResponse - The AI's response message
+ * @returns Extracted title or default based on content analysis
+ */
 function extractModificationTitle(userMessage: string, aiResponse: string): string {
+  // Convert to lowercase for easier pattern matching
   const message = userMessage.toLowerCase();
   const response = aiResponse.toLowerCase();
   const fullText = (userMessage + ' ' + aiResponse).toLowerCase();
   
-  // Enhanced RCP valve extraction with specific valve IDs
+  // ============================================================================
+  // PATTERN MATCHING FOR SPECIFIC EQUIPMENT TYPES
+  // These patterns identify common nuclear plant equipment modifications
+  // ============================================================================
+  
+  // Enhanced RCP (Reactor Coolant Pump) valve extraction with specific valve IDs
   if (message.includes('reactor coolant pump') || message.includes('rcp')) {
     if (message.includes('seal injection') || message.includes('flow control valve')) {
-      // Look for specific valve ID
+      // Look for specific valve ID using regex pattern
       const valveMatch = fullText.match(/fcv[-_]?(\d+[a-z]?)/i);
       if (valveMatch) {
-        const valveId = valveMatch[0].toUpperCase();
+        const valveId = valveMatch[0].toUpperCase(); // Convert to standard format
         if (fullText.includes('digital') || fullText.includes('smart valve')) {
           return `RCP Seal Injection Flow Control Valve ${valveId} Digital Replacement`;
         }
@@ -28,10 +55,12 @@ function extractModificationTitle(userMessage: string, aiResponse: string): stri
     return 'Reactor Coolant Pump Modification';
   }
   
+  // Emergency Diesel Generator modifications
   if (message.includes('emergency diesel generator') || message.includes('edg')) {
     return 'Emergency Diesel Generator Control Panel Upgrade';
   }
   
+  // Motor replacement modifications
   if (message.includes('motor') && message.includes('replace')) {
     if (message.includes('emergency core cooling') || message.includes('eccs')) {
       return 'Emergency Core Cooling System Motor Replacement';
@@ -42,6 +71,7 @@ function extractModificationTitle(userMessage: string, aiResponse: string): stri
     return 'Motor Replacement Modification';
   }
   
+  // Valve replacement modifications with ID extraction
   if (message.includes('valve') && message.includes('replace')) {
     // Look for specific valve ID in general valve replacements
     const valveMatch = fullText.match(/[a-z]{2,4}[-_]?(\d+[a-z]?)/i);
@@ -114,6 +144,14 @@ interface Message {
   metadata?: any;
 }
 
+interface ChatHistory {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface ChatInterfaceProps {
   onSendMessage?: (message: string, file?: File, context?: any) => void;
   onAnalyzeFile?: (file: File) => void;
@@ -128,6 +166,12 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenariosUpdate }: ChatInterfaceProps) {
+  // Chat History State Management
+  const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string>('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Current Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -135,6 +179,7 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
   const [isInitialized, setIsInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Initialize MT Document Service
   const [mtDocumentService, setMtDocumentService] = useState<any>(null);
@@ -183,7 +228,7 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
     if (!isInitialized) {
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        text: "Hello! I'm your MT Analyzer Assistant. I can help you analyze Modification Traveler documents and determine MT requirements. You can:\n\n• Ask questions about MT requirements\n• Upload MT documents for analysis\n• Get guidance on Figure 1 decision tree\n• Review safety classifications and design types\n\nHow can I help you today?",
+        text: "# MT Analyzer Assistant\n\n**Welcome to the Modification Traveler Analysis System**\n\nI'm your AI assistant for MT document analysis and regulatory compliance. I can help you with:\n\n• **Document Analysis** - Upload and analyze MT documents\n• **Decision Tree Guidance** - Navigate Figure 1 requirements\n• **Safety Classifications** - Determine proper safety assignments\n• **Design Assessment** - Evaluate modification complexity\n• **Regulatory Compliance** - Ensure MT standards adherence\n\nSimply ask questions or upload documents to get started. What can I help you analyze today?",
         sender: 'ai',
         timestamp: new Date(),
         type: 'text'
@@ -498,10 +543,298 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
     }
   };
 
+  // ============================================================================
+  // CHAT HISTORY MANAGEMENT FUNCTIONS
+  // ============================================================================
+
+  // Generate title from first user message
+  const generateChatTitle = (messages: Message[]): string => {
+    const firstUserMessage = messages.find(msg => msg.sender === 'user');
+    if (!firstUserMessage) return 'New Chat';
+    
+    // Truncate long messages and add ellipsis
+    const title = firstUserMessage.text.length > 50 
+      ? firstUserMessage.text.substring(0, 50) + '...'
+      : firstUserMessage.text;
+    
+    return title;
+  };
+
+  // Save current chat to history
+  const saveCurrentChat = () => {
+    if (messages.length === 0 || !currentChatId) return;
+    
+    const updatedHistories = chatHistories.map(chat => 
+      chat.id === currentChatId 
+        ? {
+            ...chat,
+            messages: [...messages],
+            title: generateChatTitle(messages),
+            updatedAt: new Date()
+          }
+        : chat
+    );
+    
+    setChatHistories(updatedHistories);
+    
+    // Persist to localStorage
+    try {
+      localStorage.setItem('mtChatHistories', JSON.stringify(updatedHistories));
+    } catch (error) {
+      console.error('Failed to save chat history:', error);
+    }
+  };
+
+  // Create new chat
+  const createNewChat = () => {
+    // Save current chat first
+    if (messages.length > 0) {
+      saveCurrentChat();
+    }
+    
+    // Create new chat ID and reset state
+    const newChatId = Date.now().toString();
+    setCurrentChatId(newChatId);
+    setMessages([]);
+    setIsInitialized(false);
+    setInputMessage('');
+    setSelectedFile(null);
+    
+    // Create new chat history entry
+    const newChat: ChatHistory = {
+      id: newChatId,
+      title: 'New Chat',
+      messages: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const updatedHistories = [newChat, ...chatHistories];
+    setChatHistories(updatedHistories);
+    
+    // Persist to localStorage
+    try {
+      localStorage.setItem('mtChatHistories', JSON.stringify(updatedHistories));
+    } catch (error) {
+      console.error('Failed to save new chat:', error);
+    }
+  };
+
+  // Switch to existing chat
+  const switchToChat = (chatId: string) => {
+    // Save current chat first
+    if (messages.length > 0 && currentChatId) {
+      saveCurrentChat();
+    }
+    
+    // Load selected chat
+    const selectedChat = chatHistories.find(chat => chat.id === chatId);
+    if (selectedChat) {
+      setCurrentChatId(chatId);
+      setMessages(selectedChat.messages);
+      setIsInitialized(selectedChat.messages.length > 0);
+      setInputMessage('');
+      setSelectedFile(null);
+    }
+  };
+
+  // Delete chat from history
+  const deleteChat = (chatId: string) => {
+    const updatedHistories = chatHistories.filter(chat => chat.id !== chatId);
+    setChatHistories(updatedHistories);
+    
+    // If deleting current chat, create new one
+    if (chatId === currentChatId) {
+      if (updatedHistories.length > 0) {
+        switchToChat(updatedHistories[0].id);
+      } else {
+        createNewChat();
+      }
+    }
+    
+    // Persist to localStorage
+    try {
+      localStorage.setItem('mtChatHistories', JSON.stringify(updatedHistories));
+    } catch (error) {
+      console.error('Failed to delete chat:', error);
+    }
+  };
+
+  // Load chat histories from localStorage on component mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('mtChatHistories');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const historiesWithDates = parsed.map((chat: any) => ({
+          ...chat,
+          createdAt: new Date(chat.createdAt),
+          updatedAt: new Date(chat.updatedAt),
+          messages: chat.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        }));
+        setChatHistories(historiesWithDates);
+        
+        // Load most recent chat if exists
+        if (historiesWithDates.length > 0) {
+          const mostRecent = historiesWithDates[0];
+          setCurrentChatId(mostRecent.id);
+          setMessages(mostRecent.messages);
+          setIsInitialized(mostRecent.messages.length > 0);
+        } else {
+          createNewChat();
+        }
+      } else {
+        createNewChat();
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+      createNewChat();
+    }
+  }, []);
+
+  // Save current chat when messages change
+  useEffect(() => {
+    if (messages.length > 0 && currentChatId) {
+      saveCurrentChat();
+    }
+  }, [messages]);
+
+  // Copy message to clipboard
+  const handleCopyMessage = async (messageText: string) => {
+    try {
+      await navigator.clipboard.writeText(messageText);
+      // Optional: You can add a toast notification here
+      console.log('Message copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy message:', error);
+    }
+  };
+
+  // Edit message - populate input field with message text
+  const handleEditMessage = (messageText: string) => {
+    setInputMessage(messageText);
+    // Focus on the input field
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
   return (
-    <div className="h-full flex flex-col">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+    <div className="chat-layout">
+      {/* Sidebar */}
+      <div className={`chat-sidebar ${sidebarOpen ? 'chat-sidebar--open' : 'chat-sidebar--closed'}`}>
+        <div className="h-full flex flex-col">
+          {/* Sidebar Header */}
+          <div className="sidebar-header">
+            <div className="sidebar-header-top">
+              <h2 className="sidebar-title">Chat History</h2>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="sidebar-close-btn"
+              >
+                ✕
+              </button>
+            </div>
+            <button
+              onClick={createNewChat}
+              className="new-chat-btn"
+            >
+              <span>+</span>
+              <span>New Chat</span>
+            </button>
+          </div>
+          
+          {/* Chat History List */}
+          <div className="chat-history-list">
+            {chatHistories.length === 0 ? (
+              <div className="chat-history-empty">
+                <div className="chat-history-empty-icon">💬</div>
+                <p className="chat-history-empty-title">No chat history yet</p>
+                <p className="chat-history-empty-subtitle">Start a conversation to see it here</p>
+              </div>
+            ) : (
+              chatHistories.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`chat-history-item ${
+                    chat.id === currentChatId ? 'chat-history-item--active' : ''
+                  }`}
+                >
+                  <div onClick={() => switchToChat(chat.id)} className="chat-item-content">
+                    <div className="chat-item-title">
+                      {chat.title}
+                    </div>
+                    <div className="chat-item-meta">
+                      {chat.updatedAt.toLocaleDateString()} • {chat.messages.length} messages
+                    </div>
+                  </div>
+                  
+                  {/* Delete button - only show on hover and not for current chat */}
+                  {chat.id !== currentChatId && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('Delete this chat?')) {
+                          deleteChat(chat.id);
+                        }
+                      }}
+                      className="chat-delete-btn"
+                      title="Delete chat"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Chat Interface */}
+      <div className="chat-main">
+        {/* Top Bar */}
+        <div className="chat-top-bar">
+          <div className="top-bar-left">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="sidebar-toggle-btn"
+              title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="top-bar-title-section">
+              <h1>MT Analyzer Assistant</h1>
+              <p>Powered by Azure OpenAI GPT-4</p>
+            </div>
+          </div>
+          
+          <div className="top-bar-right">
+            <div className="conversation-counter">
+              {chatHistories.length} conversations
+            </div>
+            {!sidebarOpen && (
+              <button
+                onClick={createNewChat}
+                className="new-chat-btn--compact"
+                title="Start new chat"
+              >
+                <span>+</span>
+                <span>New</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
         {messages.length === 0 && (
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -527,7 +860,7 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
           </div>
         )}
 
-        {messages.map((message) => (
+        {messages.map((message, index) => (
           <div
             key={message.id}
             className={`flex items-start space-x-3 ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}
@@ -560,10 +893,94 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
                 <ReactMarkdown>{message.text}</ReactMarkdown>
               </div>
               
-              <div className={`text-xs mt-2 ${
+              <div className={`flex items-center justify-between mt-2 ${
                 message.sender === 'user' ? 'text-blue-200' : 'text-gray-500'
               }`}>
-                {message.timestamp.toLocaleTimeString()}
+                <div className="text-xs">
+                  {message.timestamp.toLocaleTimeString()}
+                </div>
+                
+                {/* Action Buttons - exclude all buttons from first welcome message */}
+                {index > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleCopyMessage(message.text)}
+                      className={`p-1 rounded hover:bg-opacity-80 transition-colors ${
+                        message.sender === 'user' 
+                          ? 'hover:bg-blue-700 text-blue-200 hover:text-white' 
+                          : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
+                      }`}
+                      title="Copy message"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                    
+                    {/* Edit button only for user messages */}
+                    {message.sender === 'user' && (
+                      <button
+                        onClick={() => handleEditMessage(message.text)}
+                        className="p-1 rounded hover:bg-blue-700 text-blue-200 hover:text-white transition-colors"
+                        title="Edit message"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </button>
+                    )}
+                    
+                    {/* Additional buttons for AI messages */}
+                    {message.sender === 'ai' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            const utterance = new SpeechSynthesisUtterance(message.text);
+                            speechSynthesis.speak(utterance);
+                          }}
+                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Read aloud"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 7h4l5-5v20l-5-5H5a1 1 0 01-1-1V8a1 1 0 011-1z" />
+                          </svg>
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            console.log('Retry response for:', message.text);
+                          }}
+                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Retry response"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            console.log('Marked as helpful:', message.text);
+                          }}
+                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Mark as helpful"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V9a2 2 0 00-2-2V5a2 2 0 00-2-2 2 2 0 00-2 2v6.5z" />
+                          </svg>
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            console.log('Marked as unhelpful:', message.text);
+                          }}
+                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Mark as unhelpful"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v2a2 2 0 002 2v2a2 2 0 002 2 2 2 0 002-2v-6.5z" />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -575,25 +992,21 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
               <Bot className="w-4 h-4" />
             </div>
             <div className="flex-1 bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-600">Analyzing with GPT-4...</span>
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce loading-dot-1"></div>
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce loading-dot-2"></div>
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce loading-dot-3"></div>
-                </div>
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm text-gray-600">AI is thinking...</span>
               </div>
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* File Preview */}
       {selectedFile && (
-        <div className="mx-6 mb-4">
-          <div className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="border-t bg-gray-50 p-4">
+          <div className="flex items-center space-x-2 bg-blue-50 rounded-lg p-2">
             <FileUp className="w-5 h-5 text-blue-600" />
             <span className="flex-1 text-sm font-medium text-blue-700">{selectedFile.name}</span>
             <button
@@ -623,11 +1036,12 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
           
           <div className="flex-1">
             <textarea
+              ref={textareaRef}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Describe your modification scenario..."
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+              className="chat-input"
               rows={2}
               disabled={isLoading}
             />
@@ -637,22 +1051,57 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
             onClick={handleSendMessage}
             disabled={!inputMessage.trim() || isLoading}
             className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[48px]"
-            title="Send message"
           >
-            <Send className="w-5 h-5" />
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
+          
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center"
+            title="Upload file"
+          >
+            <FileUp className="w-5 h-5" />
           </button>
         </div>
-      </div>
 
-      {/* MT Document Modal */}
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={handleFileSelect}
+          className="hidden"
+          accept=".pdf,.doc,.docx,.txt"
+        />
+
+        {/* Selected file indicator */}
+        {selectedFile && (
+          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded flex items-center justify-between">
+            <span className="text-sm text-blue-700">📎 {selectedFile.name}</span>
+            <button
+              onClick={() => setSelectedFile(null)}
+              className="text-blue-500 hover:text-blue-700 ml-2"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* Document Modal */}
+    {showDocumentModal && (
       <MTDocumentModal
         isOpen={showDocumentModal}
         onClose={() => setShowDocumentModal(false)}
-        documentHTML={documentHTML}
-        mtData={currentMTData}
+        htmlContent={documentHTML}
         onDownloadPDF={handleDownloadPDF}
         onDownloadWord={handleDownloadWord}
       />
-    </div>
-  );
+    )}
+  </div>
+);
 }
