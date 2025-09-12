@@ -475,3 +475,85 @@ body {
     text-align: center;
   }
 }
+
+/* Document Button Styles */
+.btn-document {
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+}
+
+.btn-document:hover {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+}
+
+.btn-document:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+}
+
+.btn-document:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* MT Document Styles */
+.mt-document-container {
+  font-family: 'Times New Roman', serif;
+  line-height: 1.4;
+  color: #000;
+  max-width: 100%;
+  margin: 0;
+  padding: 24px;
+}
+
+.mt-table-header {
+  border: 1px solid #333;
+  padding: 8px;
+  background-color: #f8f9fa;
+  font-weight: bold;
+  vertical-align: top;
+  font-size: 12px;
+}
+
+.mt-table-data {
+  border: 1px solid #333;
+  padding: 8px;
+  vertical-align: top;
+  font-size: 12px;
+  min-height: 20px;
+}
+
+.mt-section-header {
+  background-color: #e9ecef;
+  border: 2px solid #333;
+  padding: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.mt-checkbox-selected {
+  color: #059669;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.mt-checkbox-unselected {
+  color: #6b7280;
+  font-size: 14px;
+}

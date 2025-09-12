@@ -1,43 +1,77 @@
-# Modification Traveler Analysis System ✅
+# DocumentAI Multi-Assistant Platform ✅
 
-A comprehensive .NET C# backend system that automatically analyzes Modification Traveler (MT) documents and determines MT requirements using Azure OpenAI integration and decision tree logic based on Figure 1.
+A comprehensive nuclear facility document analysis platform with AI-powered assistants for MT (Modification Traveler), GRB (Governing Review Board), USQ (Unreviewed Safety Question), and FSAR (Final Safety Analysis Report) analysis.
 
 **🎯 Status: COMPLETE & TESTED**
-- ✅ Full Figure 1 decision tree implementation  
-- ✅ Azure OpenAI integration with fallback logic
-- ✅ Command-line interface with multiple input modes
-- ✅ Comprehensive JSON report generation  
-- ✅ Risk assessment and compliance checking
-- ✅ Built and tested successfully
+- ✅ GPT-4 powered intelligent analysis
+- ✅ Multi-assistant platform with unified navigation
+- ✅ Real-time document preview and generation
+- ✅ Natural language conversation interface
+- ✅ Professional nuclear facility compliance formatting
+- ✅ Full-stack Next.js + .NET 8 architecture
+
+## Architecture
+
+```
+DocumentAI/
+├── backend/              # .NET 8 Web API
+│   ├── Controllers/      # API endpoints
+│   ├── Services/         # Business logic & GPT-4 integration
+│   ├── Models/          # Data transfer objects
+│   └── README.md        # Backend documentation
+├── frontend/            # Next.js 15 React application
+│   ├── src/components/  # React components
+│   ├── src/services/    # API integration
+│   └── README.md        # Frontend documentation
+├── database/            # Database schemas & migrations
+└── docs/               # Documentation
 
 ## Features
 
 ### 🔍 Core Capabilities
-- **Decision Tree Logic Engine**: Implements Figure 1 flowchart logic to determine MT requirements
-- **Azure OpenAI Integration**: Uses AI to enhance document analysis and extract information
-- **Document Analysis**: Extracts and summarizes Design Inputs, Design Outputs, and impacted documents
-- **Risk Assessment**: Evaluates safety, environmental, and operational risks
-- **Compliance Checking**: Validates against Attachment A requirements (A.1-A.5)
-- **Command-Line Interface**: Easy-to-use CLI for analysis and batch processing
+- **Multi-Assistant Platform**: MT, GRB, USQ, and FSAR analysis assistants
+- **GPT-4 Intelligence**: Natural language processing for complex nuclear scenarios
+- **Real-time Document Generation**: Live MT document preview with progress tracking
+- **Intelligent Conversation**: Context-aware chat with nuclear terminology understanding
+- **Professional Formatting**: Nuclear facility compliance document generation
+- **Cross-Assistant Data Sharing**: Integrated project data across all assistants
 
-### 📋 Analysis Components
-1. **MT Requirement Determination**: Based on Figure 1 decision tree
-2. **Design Type Classification**: Types I-V classification
-3. **Input/Output Analysis**: Comprehensive document impact assessment
-4. **Stakeholder Identification**: Suggests reviewers and approval groups
-5. **Gap Analysis**: Identifies missing elements and inconsistencies
-6. **Action Planning**: Provides next steps for Design Authority
+### 📋 MT Analysis Components
+1. **Intelligent MT Classification**: GPT-4 powered Type I-V determination
+2. **Natural Language Processing**: Understands nuclear equipment and safety classifications
+3. **Real-time Document Building**: Live MT form population and progress tracking
+4. **Equipment Replacement Analysis**: Identical vs non-identical replacement logic
+5. **Safety Classification**: Automatic safety-related, safety-significant detection
+6. **Regulatory Compliance**: 10 CFR 50.59 and nuclear facility requirements
 
-## Prerequisites
+## Quick Start
 
-- .NET 8.0 SDK or later
-- Azure OpenAI resource with GPT-4 deployment
-- Visual Studio Code or Visual Studio 2022
+### Option 1: Use Development Scripts (Recommended)
+```bash
+# Windows
+./start-dev.bat
 
-## Installation
+# Linux/Mac  
+./start-dev.sh
+```
 
-1. **Clone or download the project**
-2. **Configure Azure OpenAI settings** in `appsettings.json`:
+### Option 2: Manual Startup
+```bash
+# Terminal 1 - Backend (.NET 8)
+cd backend
+dotnet restore
+dotnet run --urls="http://localhost:5001"
+
+# Terminal 2 - Frontend (Next.js)
+cd frontend
+npm install
+npm run dev
+```
+
+### Access the Application
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5001
+- **API Documentation**: http://localhost:5001/swagger
    ```json
    {
      "AzureOpenAI": {

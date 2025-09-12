@@ -1,3 +1,22 @@
+export interface MTFormConfig {
+  // Form metadata that can be configured
+  formNumber?: string;
+  formRevision?: string;
+  formDate?: string;
+  formTitle?: string;
+  pageCount?: number;
+  
+  // Organization information
+  preparedFor?: string;
+  preparedBy?: string;
+  contractorInfo?: string;
+  contractNumber?: string;
+  
+  // Footer information
+  formReference?: string;
+  disclaimer?: string;
+}
+
 export interface MTDocumentData {
   // Header Information
   mtNumber?: string;
@@ -121,11 +140,38 @@ class MTDocumentService {
   private static instance: MTDocumentService;
   
   private documentData: Partial<MTDocumentData> = {};
+  private formConfig: MTFormConfig = {};
   private progressCallbacks: ((progress: number) => void)[] = [];
   private documentPreviewCallbacks: ((preview: string) => void)[] = [];
   private templateBuffer: ArrayBuffer | null = null;
 
-  private constructor() {}
+  private constructor() {
+    // Set default configuration
+    this.setDefaultFormConfig();
+  }
+
+  private setDefaultFormConfig(): void {
+    this.formConfig = {
+      formNumber: 'MT-50231',
+      formRevision: 'Rev.00',
+      formDate: new Date().toLocaleDateString('en-US', { 
+        month: 'numeric', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }),
+      formTitle: 'MODIFICATION TRAVELER',
+      pageCount: 2,
+      preparedFor: 'U.S. Department of Energy, Assistant Secretary for Environmental Management',
+      preparedBy: 'Washington River Protection Solutions, LLC., PO Box 850, Richland, WA 99352',
+      contractorInfo: 'Contractor For U.S. Department of Energy, Office of River Protection',
+      contractNumber: 'Contract DE-AC27-08RV14800',
+      formReference: 'SPF-015 (Rev.B1)',
+      disclaimer: 'Reference herein to any specific commercial product, process, or service by trade name, trademark, manufacturer, or otherwise, does not necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or any agency thereof or its contractors or subcontractors. Printed in the United States of America.'
+    };
+  }
 
   public static getInstance(): MTDocumentService {
     if (!MTDocumentService.instance) {
@@ -160,6 +206,16 @@ class MTDocumentService {
     this.documentPreviewCallbacks.push(callback);
   }
 
+  // Configure form metadata
+  setFormConfig(config: Partial<MTFormConfig>): void {
+    this.formConfig = { ...this.formConfig, ...config };
+  }
+
+  // Get current form configuration
+  getFormConfig(): MTFormConfig {
+    return { ...this.formConfig };
+  }
+
   // Calculate completion progress based on filled fields
   calculateProgress(): number {
     const requiredFields = [
@@ -175,401 +231,420 @@ class MTDocumentService {
     return Math.round((filledFields.length / requiredFields.length) * 100);
   }
 
-  // Generate HTML preview of the document
+  // Generate HTML preview of the document matching the exact MT-50231 format
   generatePreviewHTML(): string {
     const data = this.documentData;
     
     return `
-    <div class="max-w-4xl mx-auto p-6 bg-white shadow-lg">
-      <!-- Header -->
-      <div class="text-center border-b-2 border-gray-800 pb-4 mb-6">
-        <h1 class="text-xl font-bold text-gray-900">MT-50231 Rev.00 5/11/2017 - 9:01 AM 1 of 2</h1>
-        <h2 class="text-2xl font-bold text-gray-900 mt-2">MODIFICATION TRAVELER</h2>
-        <p class="text-sm text-gray-700 mt-2">Prepared For the U.S. Department of Energy, Assistant Secretary for Environmental Management</p>
-        <p class="text-sm text-gray-700">By Washington River Protection Solutions, LLC., PO Box 850, Richland, WA 99352</p>
-        <p class="text-sm text-gray-700">Contractor For U.S. Department of Energy, Office of River Protection, under Contract DE-AC27-08RV14800</p>
-        
-        <div class="mt-4 border border-gray-400 p-2 inline-block">
-          <p class="text-sm font-semibold">Release Stamp</p>
-          <p class="text-xs">Clearance Review Restriction Type:</p>
-          <div class="border border-gray-300 h-12 w-32 mt-1"></div>
+    <style>
+      .mt-document-container {
+        font-family: 'Times New Roman', serif;
+        line-height: 1.2;
+        color: #000;
+        max-width: 8.5in;
+        margin: 0 auto;
+        padding: 0.5in;
+        font-size: 10pt;
+      }
+      .mt-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 8px;
+      }
+      .mt-table td {
+        border: 1px solid #000;
+        padding: 4px 6px;
+        vertical-align: top;
+        font-size: 9pt;
+      }
+      .mt-header-cell {
+        background-color: #f0f0f0;
+        font-weight: bold;
+        font-size: 9pt;
+      }
+      .mt-section-header {
+        background-color: #e0e0e0;
+        font-weight: bold;
+        text-align: center;
+        font-size: 10pt;
+        border: 2px solid #000;
+        padding: 6px;
+        margin: 8px 0 4px 0;
+      }
+      .mt-checkbox {
+        font-family: Arial, sans-serif;
+        font-size: 12pt;
+      }
+      .mt-header-info {
+        text-align: center;
+        font-size: 8pt;
+        line-height: 1.1;
+        margin-bottom: 8px;
+      }
+      .mt-form-header {
+        font-size: 8pt;
+        text-align: right;
+        margin-bottom: 4px;
+      }
+      .mt-title {
+        font-size: 16pt;
+        font-weight: bold;
+        text-align: center;
+        margin: 8px 0;
+      }
+      .release-stamp {
+        float: right;
+        width: 2in;
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: center;
+        font-size: 8pt;
+        margin-left: 16px;
+      }
+      .clearfix::after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+    </style>
+    
+    <div class="mt-document-container">
+      <!-- Header with form number and title -->
+      <div class="mt-form-header">${this.formConfig.formNumber} ${this.formConfig.formRevision} ${this.formConfig.formDate} 1 of ${this.formConfig.pageCount}</div>
+      
+      <div class="clearfix">
+        <div class="release-stamp">
+          <div style="font-weight: bold;">Release Stamp</div>
+          <div style="margin: 8px 0;">Clearance Review Restriction Type</div>
+          <div style="border: 1px solid #ccc; height: 80px; margin-top: 8px;"></div>
         </div>
+        
+        <div class="mt-title">${this.formConfig.formTitle}</div>
+      </div>
+      
+      <div class="mt-header-info">
+        Prepared For the ${this.formConfig.preparedFor}<br>
+        By ${this.formConfig.preparedBy}<br>
+        ${this.formConfig.contractorInfo}, under ${this.formConfig.contractNumber}<br>
+        <br>
+        ${this.formConfig.disclaimer}
       </div>
 
-      <!-- MT Number and Title -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <table class="w-full text-sm border-collapse">
-          <tr>
-            <td class="mt-table-header w-1/4">1. MT No:</td>
-            <td class="mt-table-data w-1/4">${data.mtNumber || '[MT Number]'}</td>
-            <td class="mt-table-header w-1/6">Rev.</td>
-            <td class="mt-table-data">${data.revision || '0'}</td>
-          </tr>
-          <tr>
-            <td class="mt-table-header">2. Title:</td>
-            <td class="mt-table-data" colspan="3">${data.title || '[Modification Title]'}</td>
-          </tr>
-        </table>
-      </div>
+      <!-- Section with MT No and Title -->
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 15%;">1. MT No:</td>
+          <td style="width: 15%;">${this.formatFieldValue(data.mtNumber, '')}</td>
+          <td class="mt-header-cell" style="width: 10%;">Rev.</td>
+          <td style="width: 60%;"></td>
+        </tr>
+        <tr>
+          <td class="mt-header-cell">2. Title:</td>
+          <td colspan="3">${this.formatFieldValue(data.title, '')}</td>
+        </tr>
+      </table>
 
       <!-- Section I: Request for Modification -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION I REQUEST FOR MODIFICATION</h2>
-        
-        <table class="w-full text-sm border-collapse mb-4">
-          <tr>
-            <td class="mt-table-header w-1/3">3. Requested Completion Date (Optional):</td>
-            <td class="mt-table-data w-1/3">${data.requestedCompletionDate || '[MM/DD/YYYY]'}</td>
-            <td class="mt-table-header w-1/6">4. CACN (optional)</td>
-            <td class="mt-table-data">${data.cacn || ''}</td>
-          </tr>
-          <tr>
-            <td class="mt-table-header">5. Project Number: ☐</td>
-            <td class="mt-table-data">${data.projectNumber || '[Project Number]'}</td>
-            <td class="mt-table-header">6. Design Type:</td>
-            <td class="mt-table-data">
-              ${this.renderDesignTypeCheckboxes(data.designType)}
-              <div class="mt-1">${data.designType || '[Select Design Type]'}</div>
-            </td>
-          </tr>
-          <tr>
-            <td class="mt-table-header" colspan="2">7. Project Type:</td>
-            <td class="mt-table-data" colspan="2">${data.projectType || '[Project Type]'}</td>
-          </tr>
-        </table>
+      <div class="mt-section-header">SECTION I REQUEST FOR MODIFICATION</div>
+      
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 40%;">3. Requested Completion Date (Optional):</td>
+          <td style="width: 25%;">${this.formatFieldValue(data.requestedCompletionDate, '')}</td>
+          <td class="mt-header-cell" style="width: 20%;">4. CACN (optional)</td>
+          <td style="width: 15%;"></td>
+        </tr>
+        <tr>
+          <td class="mt-header-cell">5. Project Number: <span class="mt-checkbox">☐</span></td>
+          <td>${this.formatFieldValue(data.projectNumber, '')}</td>
+          <td class="mt-header-cell">6. Design Type:</td>
+          <td class="mt-header-cell">7. Project Type:</td>
+        </tr>
+        <tr>
+          <td colspan="2"></td>
+          <td>
+            <span class="mt-checkbox">☐</span> I <span class="mt-checkbox">☐</span> II <span class="mt-checkbox">☐</span> III <span class="mt-checkbox">☐</span> IV <span class="mt-checkbox">☐</span> V <span class="mt-checkbox">☐</span> VI
+          </td>
+          <td></td>
+        </tr>
+      </table>
 
-        <div class="mb-4">
-          <h3 class="font-semibold text-gray-900 mb-2">8. Related Structures, Systems, and Components</h3>
-          <table class="w-full text-sm border-collapse">
-            <tr>
-              <td class="mt-table-header w-1/3">a. Related Building/Facilities ☐ N/A</td>
-              <td class="mt-table-header w-1/3">b. Related Systems ☐ N/A</td>
-              <td class="mt-table-header">c. Related Equipment ID Nos. (EIN) ☐ N/A</td>
-            </tr>
-            <tr>
-              <td class="mt-table-data h-16">${data.relatedBuildings || ''}</td>
-              <td class="mt-table-data h-16">${data.relatedSystems || ''}</td>
-              <td class="mt-table-data h-16">${data.relatedEquipment || ''}</td>
-            </tr>
-          </table>
-        </div>
+      <!-- Related Structures, Systems, and Components -->
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" colspan="4">8. Related Structures, Systems, and Components</td>
+        </tr>
+        <tr>
+          <td class="mt-header-cell" style="width: 33%;">a. Related Building/Facilities <span class="mt-checkbox">☐</span> N/A</td>
+          <td class="mt-header-cell" style="width: 33%;">b. Related Systems <span class="mt-checkbox">☐</span> N/A</td>
+          <td class="mt-header-cell" style="width: 34%;">c. Related Equipment ID Nos. (EIN) <span class="mt-checkbox">☐</span> N/A</td>
+        </tr>
+        <tr>
+          <td style="height: 40px; vertical-align: top;">${this.formatFieldValue(data.relatedBuildings, '')}</td>
+          <td style="height: 40px; vertical-align: top;">${this.formatFieldValue(data.relatedSystems, '')}</td>
+          <td style="height: 40px; vertical-align: top;">${this.formatFieldValue(data.relatedEquipment, '')}</td>
+        </tr>
+      </table>
 
-        <div class="mb-4">
-          <label class="block font-semibold text-gray-900 mb-2">9. Problem Description</label>
-          <div class="mt-table-data min-h-24 p-3">${data.problemDescription || data.description || '[Describe the problem or need for modification]'}</div>
-        </div>
+      <!-- Problem Description -->
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">9. Problem Description</td>
+        </tr>
+        <tr>
+          <td style="height: 80px; vertical-align: top;">${this.formatFieldValue(data.problemDescription || data.description, '')}</td>
+        </tr>
+      </table>
 
-        <div class="mb-4">
-          <label class="block font-semibold text-gray-900 mb-2">10. Justification</label>
-          <div class="mt-table-data min-h-24 p-3">${data.justification || '[Provide justification for the modification]'}</div>
-        </div>
-      </div>
+      <!-- Justification -->
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">10. Justification</td>
+        </tr>
+        <tr>
+          <td style="height: 80px; vertical-align: top;">${this.formatFieldValue(data.justification, '')}</td>
+        </tr>
+      </table>
 
       <!-- Section II: Required for Design Type 1 Projects -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION II REQUIRED FOR DESIGN TYPE 1 PROJECTS</h2>
-        
-        <table class="w-full text-sm border-collapse">
-          <tr>
-            <td class="mt-table-header w-1/3">11a. Project Design Review Required (TFC-ENG-DESIGN-D-17.1)?</td>
-            <td class="mt-table-header w-1/3">11b. Major Modification Evaluation Required (Use 1189 Checklist)?</td>
-            <td class="mt-table-header">11c. Safety In Design Strategy Required?</td>
-          </tr>
-          <tr>
-            <td class="mt-table-data">${this.renderCheckboxes(data.projectDesignReviewRequired)}</td>
-            <td class="mt-table-data">${this.renderCheckboxes(data.majorModificationEvaluationRequired)}</td>
-            <td class="mt-table-data">${this.renderCheckboxes(data.safetyInDesignStrategyRequired)}</td>
-          </tr>
-        </table>
-      </div>
+      <div class="mt-section-header">SECTION II REQUIRED FOR DESIGN TYPE 1 PROJECTS</div>
+      
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 33%;">11a. Project Design Review<br>Required (TFC-ENG-DESIGN-D-17.1)?</td>
+          <td class="mt-header-cell" style="width: 33%;">11b. Major Modification Evaluation<br>Required (Use 1189 Checklist)?</td>
+          <td class="mt-header-cell" style="width: 34%;">11c. Safety In Design Strategy<br>Required?</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No <span class="mt-checkbox">☐</span> N/A
+          </td>
+          <td>
+            <span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No <span class="mt-checkbox">☐</span> N/A
+          </td>
+          <td>
+            <span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No <span class="mt-checkbox">☐</span> N/A
+          </td>
+        </tr>
+      </table>
 
       <!-- Section III: Proposed Solution -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION III PROPOSED SOLUTION</h2>
-        
-        <div class="mb-4">
-          <label class="block font-semibold text-gray-900 mb-2">12. Proposed Solution</label>
-          <div class="mt-table-data min-h-32 p-3">${data.proposedSolution || data.scopeOfWork || '[Describe the proposed solution]'}</div>
-        </div>
-      </div>
+      <div class="mt-section-header">SECTION III PROPOSED SOLUTION</div>
+      
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">12. Proposed Solution</td>
+        </tr>
+        <tr>
+          <td style="height: 100px; vertical-align: top;">${this.formatFieldValue(data.proposedSolution, '')}</td>
+        </tr>
+      </table>
 
       <!-- Section IV: Design Input Record -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION IV DESIGN INPUT RECORD</h2>
-        
-        <div class="mb-4">
-          <h3 class="font-semibold text-gray-900 mb-2">13. Design Inputs ☐ N/A</h3>
-          <table class="w-full text-sm border-collapse">
-            <tr>
-              <td class="mt-table-header w-1/4">Type of Document</td>
-              <td class="mt-table-header w-1/4">Document Number</td>
-              <td class="mt-table-header w-1/6">Rev.</td>
-              <td class="mt-table-header">Title</td>
-            </tr>
-            ${this.generateDesignInputRows(data)}
-          </table>
-        </div>
+      <div class="mt-section-header">SECTION IV DESIGN INPUT RECORD</div>
+      
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">13. Design Inputs <span class="mt-checkbox">☐</span> N/A</td>
+        </tr>
+        <tr>
+          <td style="height: 60px; vertical-align: top;">${this.formatFieldValue(data.designInputs, '')}</td>
+        </tr>
+      </table>
 
-        <div class="mb-4">
-          <label class="block font-semibold text-gray-900 mb-2">14. Other Design Input Considerations:</label>
-          <div class="mt-table-data min-h-24 p-3">${data.designInputConsiderations || ''}</div>
-        </div>
-      </div>
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 33%;">Type of Document</td>
+          <td class="mt-header-cell" style="width: 33%;">Document Number</td>
+          <td class="mt-header-cell" style="width: 17%;">Rev.</td>
+          <td class="mt-header-cell" style="width: 17%;">Title</td>
+        </tr>
+        <tr><td style="height: 25px;"></td><td></td><td></td><td></td></tr>
+        <tr><td style="height: 25px;"></td><td></td><td></td><td></td></tr>
+        <tr><td style="height: 25px;"></td><td></td><td></td><td></td></tr>
+      </table>
+
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">14. Other Design Input Considerations:</td>
+        </tr>
+        <tr>
+          <td style="height: 100px; vertical-align: top;">${this.formatFieldValue(data.designInputConsiderations, '')}</td>
+        </tr>
+      </table>
+
+      <!-- Page break indicator -->
+      <div style="page-break-before: always; margin-top: 20px;">
+        <div class="mt-form-header">${this.formConfig.formNumber} ${this.formConfig.formRevision} ${this.formConfig.formDate} 2 of ${this.formConfig.pageCount}</div>
+        <div class="mt-title">${this.formConfig.formTitle}</div>
         
-        <table class="w-full text-sm border-collapse">
+        <table class="mt-table">
           <tr>
-            <td class="mt-table-header w-1/4">Project Number:</td>
-            <td class="mt-table-data ${data.projectNumber ? 'text-gray-900' : 'text-gray-400 italic'}">${data.projectNumber || '[Project Number]'}</td>
-            <td class="mt-table-header w-1/4">Priority:</td>
-            <td class="mt-table-data ${data.priority ? 'text-gray-900' : 'text-gray-400 italic'}">${data.priority || '[High/Medium/Low]'}</td>
-          </tr>
-          <tr>
-            <td class="mt-table-header">Title:</td>
-            <td class="mt-table-data ${data.title ? 'text-gray-900' : 'text-gray-400 italic'}" colspan="3">${data.title || '[Modification Title]'}</td>
-          </tr>
-          <tr>
-            <td class="mt-table-header">Facility:</td>
-            <td class="mt-table-data ${data.facility ? 'text-gray-900' : 'text-gray-400 italic'}">${data.facility || '[Facility Name]'}</td>
-            <td class="mt-table-header">Due Date:</td>
-            <td class="mt-table-data ${data.dueDate ? 'text-gray-900' : 'text-gray-400 italic'}">${data.dueDate || '[MM/DD/YYYY]'}</td>
-          </tr>
-          <tr>
-            <td class="mt-table-header">Submitted By:</td>
-            <td class="mt-table-data ${data.submittedBy ? 'text-gray-900' : 'text-gray-400 italic'}">${data.submittedBy || '[Submitter Name]'}</td>
-            <td class="mt-table-header">Submission Date:</td>
-            <td class="mt-table-data ${data.submissionDate ? 'text-gray-900' : 'text-gray-400 italic'}">${data.submissionDate || '[MM/DD/YYYY]'}</td>
+            <td class="mt-header-cell" style="width: 15%;">MT No:</td>
+            <td style="width: 15%;">${this.formatFieldValue(data.mtNumber, '')}</td>
+            <td class="mt-header-cell" style="width: 10%;">Rev.</td>
+            <td style="width: 60%;"></td>
           </tr>
         </table>
       </div>
 
-      <!-- Section 2: Scope of Work -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION 2: SCOPE OF WORK</h2>
-        
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-800 mb-2">Description:</label>
-          <div class="border border-gray-400 p-3 min-h-24 ${data.description ? 'text-gray-900' : 'text-gray-400 italic'}">
-            ${data.description || '[Detailed description of the modification]'}
-          </div>
-        </div>
-        
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-800 mb-2">Justification:</label>
-          <div class="border border-gray-400 p-3 min-h-16 ${data.justification ? 'text-gray-900' : 'text-gray-400 italic'}">
-            ${data.justification || '[Business case and technical justification]'}
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <label class="block font-semibold text-gray-800 mb-1">Work Location:</label>
-            <div class="mt-table-data ${data.workLocation ? 'text-gray-900' : 'text-gray-400 italic'}">
-              ${data.workLocation || '[Specific location/area]'}
-            </div>
-          </div>
-          <div>
-            <label class="block font-semibold text-gray-800 mb-1">Estimated Duration:</label>
-            <div class="mt-table-data text-gray-400 italic">
-              ${data.estimatedStartDate && data.estimatedCompleteDate ? 
-                `${data.estimatedStartDate} to ${data.estimatedCompleteDate}` : 
-                '[Start Date - End Date]'}
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Section V: Classification -->
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 33%;">15. Preliminary Safety<br>Classification: <span class="mt-checkbox">☐</span> SC <span class="mt-checkbox">☐</span> SS <span class="mt-checkbox">☐</span> GS<br><span class="mt-checkbox">☐</span> N/A</td>
+          <td class="mt-header-cell" style="width: 33%;">15a. Environmental Risk:<br>(TFC-ENG-DESIGN-C-52 Att. D)<br><span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No</td>
+          <td class="mt-header-cell" style="width: 34%;">15b. Radiological Risk:<br>(TFC-ENG-DESIGN-C-52 Att. D)<br><span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No</td>
+        </tr>
+      </table>
 
-      <!-- Section 3: MT Determination -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION 3: MODIFICATION TRAVELER DETERMINATION</h2>
-        
-        <table class="w-full text-sm border-collapse mb-4">
-          <tr>
-            <td class="mt-table-header w-1/4">Hazard Category:</td>
-            <td class="mt-table-data ${data.hazardCategory ? 'text-gray-900' : 'text-gray-400 italic'}">${data.hazardCategory || '[Category 1/2/3]'}</td>
-            <td class="mt-table-header w-1/4">Design Type:</td>
-            <td class="mt-table-data ${data.designType ? 'text-gray-900' : 'text-gray-400 italic'}">${data.designType || '[Type I/II/III/IV/V]'}</td>
-          </tr>
-          <tr>
-            <td class="mt-table-header">MT Required:</td>
-            <td class="mt-table-data font-bold ${data.mtRequired !== undefined ? (data.mtRequired ? 'text-red-700 bg-red-50' : 'text-green-700 bg-green-50') : 'text-gray-400 italic'}">${data.mtRequired !== undefined ? (data.mtRequired ? 'YES' : 'NO') : '[TO BE DETERMINED]'}</td>
-            <td class="mt-table-header">Confidence Level:</td>
-            <td class="mt-table-data ${data.confidence ? 'text-gray-900' : 'text-gray-400 italic'}">${data.confidence ? data.confidence + '%' : '[TBD]'}</td>
-          </tr>
-        </table>
-        
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-800 mb-2">MT Determination Basis:</label>
-          <div class="border border-gray-400 p-3 min-h-16 ${data.mtRequiredReason ? 'text-gray-900' : 'text-gray-400 italic'}">
-            ${data.mtRequiredReason || '[Provide technical basis for MT requirement determination]'}
-          </div>
-        </div>
-        
-        <div class="text-sm">
-          <label class="block font-semibold text-gray-800 mb-1">Analysis Method:</label>
-          <div class="mt-table-data ${data.analysisPath ? 'text-gray-900' : 'text-gray-400 italic'}">
-            ${data.analysisPath || '[Analysis methodology used]'}
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 4: Risk Assessment (if present) -->
-      ${data.riskAssessment ? `
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION 4: RISK ASSESSMENT</h2>
-        
-        <table class="w-full text-sm border-collapse">
-          <tr>
-            <td class="mt-table-header w-1/4">Overall Risk:</td>
-            <td class="mt-table-data text-gray-900">${data.riskAssessment.overallRisk}</td>
-            <td class="mt-table-header w-1/4">Safety Risk:</td>
-            <td class="mt-table-data text-gray-900">${data.riskAssessment.safetyRisk}</td>
-          </tr>
-          <tr>
-            <td class="mt-table-header">Environmental Risk:</td>
-            <td class="mt-table-data text-gray-900">${data.riskAssessment.environmentalRisk}</td>
-            <td class="mt-table-header">Operational Risk:</td>
-            <td class="mt-table-data text-gray-900">${data.riskAssessment.operationalRisk}</td>
-          </tr>
-        </table>
-      </div>
-      ` : ''}
-
-      <!-- Page 2 Header -->
-      <div class="text-center border-b-2 border-gray-800 pb-4 mb-6 mt-12">
-        <h1 class="text-xl font-bold text-gray-900">MT-50231 Rev.00 5/11/2017 - 9:01 AM 2 of 2</h1>
-        <h2 class="text-lg font-bold text-gray-900">MODIFICATION TRAVELER</h2>
-        <div class="text-right mt-2">
-          <span class="text-sm font-semibold">MT No.: ${data.mtNumber || '[MT Number]'} Rev. ${data.revision || '0'}</span>
-        </div>
-      </div>
-
-      <!-- Page 2 Risk Classifications -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <table class="w-full text-sm border-collapse">
-          <tr>
-            <td class="mt-table-header w-1/3">15. Preliminary Safety Classification:</td>
-            <td class="mt-table-header w-1/3">16a. Environmental Risk:</td>
-            <td class="mt-table-header">16b. Radiological Risk:</td>
-          </tr>
-          <tr>
-            <td class="mt-table-data">${this.renderCheckboxes(data.preliminarySafetyClassification, ['SC', 'SS', 'GS', 'N/A'])}</td>
-            <td class="mt-table-data">(TFC-ENG-DESIGN-C-52 Att. D)<br>${this.renderCheckboxes(data.environmentalRisk, ['Yes', 'No'])}</td>
-            <td class="mt-table-data">(TFC-ENG-DESIGN-C-52 Att. D)<br>${this.renderCheckboxes(data.radiologicalRisk, ['Yes', 'No'])}</td>
-          </tr>
-        </table>
-        
-        <table class="w-full text-sm border-collapse mt-4">
-          <tr>
-            <td class="mt-table-header w-1/2">17. Hazard Category</td>
-            <td class="mt-table-header">18. Approval Designators</td>
-          </tr>
-          <tr>
-            <td class="mt-table-data h-12">${data.hazardCategory || ''}</td>
-            <td class="mt-table-data h-12">${data.approvalDesignators || ''}</td>
-          </tr>
-        </table>
-      </div>
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 50%;">17. Hazard Category</td>
+          <td class="mt-header-cell" style="width: 50%;">18. Approval Designators</td>
+        </tr>
+        <tr>
+          <td style="height: 40px;"></td>
+          <td style="height: 40px;"></td>
+        </tr>
+      </table>
 
       <!-- Section V: Impacts -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION V IMPACTS</h2>
-        
-        <div class="mb-4">
-          <h3 class="font-semibold text-gray-900 mb-2">19. Impacted Documents ☐ N/A</h3>
-          <table class="w-full text-sm border-collapse">
-            <tr>
-              <td class="mt-table-header w-1/4">Type of Document</td>
-              <td class="mt-table-header w-1/4">Document Number</td>
-              <td class="mt-table-header w-1/6">Rev.</td>
-              <td class="mt-table-header">Title</td>
-            </tr>
-            ${this.generateImpactedDocumentRows(data)}
-          </table>
-        </div>
+      <div class="mt-section-header">SECTION V IMPACTS</div>
+      
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">19. Impacted Documents <span class="mt-checkbox">☐</span> N/A</td>
+        </tr>
+        <tr>
+          <td style="height: 40px;"></td>
+        </tr>
+      </table>
 
-        <div class="mb-4">
-          <label class="block font-semibold text-gray-900 mb-2">20. Other Impacts</label>
-          <div class="mt-table-data min-h-24 p-3">${data.otherImpacts || ''}</div>
-        </div>
-      </div>
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 33%;">Type of Document</td>
+          <td class="mt-header-cell" style="width: 33%;">Document Number</td>
+          <td class="mt-header-cell" style="width: 17%;">Rev.</td>
+          <td class="mt-header-cell" style="width: 17%;">Title</td>
+        </tr>
+        <tr><td style="height: 25px;"></td><td></td><td></td><td></td></tr>
+        <tr><td style="height: 25px;"></td><td></td><td></td><td></td></tr>
+      </table>
+
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">20. Other Impacts</td>
+        </tr>
+        <tr>
+          <td style="height: 80px;"></td>
+        </tr>
+      </table>
 
       <!-- Section VI: Design Output Record -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION VI DESIGN OUTPUT RECORD</h2>
-        
-        <div class="mb-4">
-          <h3 class="font-semibold text-gray-900 mb-2">21. Design Outputs ☐ N/A</h3>
-          <table class="w-full text-sm border-collapse">
-            <tr>
-              <td class="mt-table-header w-1/4">Type of Document</td>
-              <td class="mt-table-header w-1/4">Document Number</td>
-              <td class="mt-table-header w-1/6">Rev.</td>
-              <td class="mt-table-header">Title</td>
-            </tr>
-            ${this.generateDesignOutputRows(data)}
-          </table>
-        </div>
+      <div class="mt-section-header">SECTION VI DESIGN OUTPUT RECORD</div>
+      
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">21. Design Outputs <span class="mt-checkbox">☐</span> N/A</td>
+        </tr>
+        <tr>
+          <td style="height: 40px;"></td>
+        </tr>
+      </table>
 
-        <div class="mb-4">
-          <label class="block font-semibold text-gray-900 mb-2">22. Work Package Numbers: ☐ N/A</label>
-          <div class="mt-table-data min-h-16 p-3">${data.workPackageNumbers || ''}</div>
-        </div>
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 33%;">Type of Document</td>
+          <td class="mt-header-cell" style="width: 33%;">Document Number</td>
+          <td class="mt-header-cell" style="width: 17%;">Rev.</td>
+          <td class="mt-header-cell" style="width: 17%;">Title</td>
+        </tr>
+        <tr><td style="height: 25px;"></td><td></td><td></td><td></td></tr>
+      </table>
 
-        <div class="mb-4">
-          <label class="block font-semibold text-gray-900 mb-2">23. Other Outputs</label>
-          <div class="mt-table-data min-h-24 p-3">${data.otherOutputs || ''}</div>
-        </div>
-      </div>
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">22. Work Package Numbers: <span class="mt-checkbox">☐</span> N/A</td>
+        </tr>
+        <tr>
+          <td style="height: 40px;"></td>
+        </tr>
+      </table>
+
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">23. Other Outputs</td>
+        </tr>
+        <tr>
+          <td style="height: 80px;"></td>
+        </tr>
+      </table>
 
       <!-- Section VII: Design Input and Closure Approvals -->
-      <div class="mb-6 border border-gray-400 p-4">
-        <h2 class="text-lg font-bold text-gray-900 bg-gray-200 p-2 -m-4 mb-4">SECTION VII DESIGN INPUT AND CLOSURE APPROVALS</h2>
-        
-        <div class="mb-4">
-          <h3 class="font-semibold text-gray-900 mb-2">24. Approvals</h3>
-          <table class="w-full text-sm border-collapse">
-            <tr>
-              <td class="mt-table-header w-1/4">Title</td>
-              <td class="mt-table-header w-1/4">Name</td>
-              <td class="mt-table-header w-1/4">Signature</td>
-              <td class="mt-table-header">Date</td>
-            </tr>
-            ${this.generateApprovalRows(data)}
-          </table>
-        </div>
-      </div>
+      <div class="mt-section-header">SECTION VII DESIGN INPUT AND CLOSURE APPROVALS</div>
+      
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell">24. Approvals</td>
+        </tr>
+      </table>
 
-      <!-- Footer with Form Reference -->
-      <div class="text-center text-xs text-gray-500 mt-8">
-        <p>2 SPF-015 (Rev.B1)</p>
-      </div>
+      <table class="mt-table">
+        <tr>
+          <td class="mt-header-cell" style="width: 25%;">Title</td>
+          <td class="mt-header-cell" style="width: 25%;">Name</td>
+          <td class="mt-header-cell" style="width: 25%;">Signature</td>
+          <td class="mt-header-cell" style="width: 25%;">Date</td>
+        </tr>
+        <tr><td style="height: 30px;"></td><td></td><td></td><td></td></tr>
+        <tr><td style="height: 30px;"></td><td></td><td></td><td></td></tr>
+        <tr><td style="height: 30px;"></td><td></td><td></td><td></td></tr>
+        <tr><td style="height: 30px;"></td><td></td><td></td><td></td></tr>
+      </table>
 
-      <!-- Footer -->
-      <div class="border-t-2 border-gray-800 pt-4 mt-8 text-center text-xs text-gray-500">
-        <p><strong>MODIFICATION TRAVELER DOCUMENT</strong></p>
-        <p>Generated: ${new Date().toLocaleString()} | System: Enhanced MT Analysis Platform</p>
-        <p>This document follows nuclear facility MT procedures and regulatory requirements</p>
+      <div style="text-align: right; font-size: 8pt; margin-top: 16px;">
+        ${this.formConfig.pageCount} ${this.formConfig.formReference}
       </div>
     </div>
     `;
   }
 
-  // Helper function to render checkbox options
+  // Helper function to format field values with styling
+  private formatFieldValue(value: string | undefined, placeholder: string): string {
+    if (value && value.trim()) {
+      return `<span class="mt-filled-field">${value}</span>`;
+    }
+    return `<span class="mt-placeholder-field">${placeholder}</span>`;
+  }
+
+  // Enhanced helper function to render checkbox options with better styling
   private renderCheckboxes(selectedValue?: string, options: string[] = ['Yes', 'No', 'N/A']): string {
     return options.map(option => {
-      const checked = selectedValue === option ? '☑' : '☐';
-      return `${checked} ${option}`;
+      const isSelected = selectedValue === option;
+      const checkbox = isSelected 
+        ? '<span style="color: #059669; font-weight: bold; font-size: 14px;">☑</span>' 
+        : '<span style="color: #6b7280; font-size: 14px;">☐</span>';
+      const textStyle = isSelected 
+        ? 'font-weight: bold; color: #059669;' 
+        : 'color: #374151;';
+      return `${checkbox} <span style="${textStyle}">${option}</span>`;
     }).join(' ');
   }
 
-  // Helper function to render design type checkboxes
+  // Enhanced helper function to render design type checkboxes
   private renderDesignTypeCheckboxes(selectedDesignType?: string): string {
     const types = ['I', 'II', 'III', 'IV', 'V', 'VI'];
     const selectedNumber = this.extractDesignTypeNumber(selectedDesignType);
     
     return types.map(type => {
-      const checked = selectedNumber === type ? '☑' : '☐';
-      return `${checked} ${type}`;
+      const isSelected = selectedNumber === type;
+      const checkbox = isSelected 
+        ? '<span style="color: #059669; font-weight: bold; font-size: 14px;">☑</span>' 
+        : '<span style="color: #6b7280; font-size: 14px;">☐</span>';
+      const textStyle = isSelected 
+        ? 'font-weight: bold; color: #059669;' 
+        : 'color: #374151;';
+      return `${checkbox} <span style="${textStyle}">${type}</span>`;
     }).join(' ');
   }
 
@@ -681,32 +756,32 @@ class MTDocumentService {
       
       // Document Information
       projectNumber: questionnaireData?.projectNumber || `MT-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
-      title: questionnaireData?.projectTitle || questionnaireData?.title || 'Emergency Diesel Generator Control Panel Upgrade',
+      title: questionnaireData?.projectTitle || questionnaireData?.title || '[Modification Title - To be determined from analysis]',
       facility: questionnaireData?.facility || 'Nuclear Facility',
-      submittedBy: questionnaireData?.submittedBy || 'System Generated',
+      submittedBy: questionnaireData?.submittedBy || 'Engineering Department',
       submissionDate: now.toLocaleDateString(),
       priority: questionnaireData?.priority || 'High',
-      dueDate: questionnaireData?.dueDate || 'Next Maintenance Outage',
+      dueDate: questionnaireData?.dueDate || '[MM/DD/YYYY]',
       
       // Section I - Request for Modification
-      requestedCompletionDate: questionnaireData?.requestedCompletionDate || 'Next Maintenance Outage',
+      requestedCompletionDate: questionnaireData?.requestedCompletionDate || '[MM/DD/YYYY]',
       cacn: questionnaireData?.cacn || '',
-      projectType: questionnaireData?.projectType || 'Safety System Upgrade',
-      relatedBuildings: questionnaireData?.relatedBuildings || 'Reactor Building, Emergency Power Building',
-      relatedSystems: questionnaireData?.relatedSystems || 'Emergency Core Cooling System (ECCS), Plant Protection System',
-      relatedEquipment: questionnaireData?.relatedEquipment || 'Emergency Diesel Generator, Control Panels, Cable Runs',
-      problemDescription: questionnaireData?.problemDescription || questionnaireData?.description || 'Replacing 1980s analog emergency diesel generator control panel with modern digital control system to improve reliability, monitoring capabilities, and response times for emergency shutdown scenarios.',
+      projectType: questionnaireData?.projectType || '[Project Type]',
+      relatedBuildings: questionnaireData?.relatedBuildings || '[Related Buildings/Facilities]',
+      relatedSystems: questionnaireData?.relatedSystems || '[Related Systems]',
+      relatedEquipment: questionnaireData?.relatedEquipment || '[Related Equipment]',
+      problemDescription: questionnaireData?.problemDescription || questionnaireData?.description || '[Detailed description of the modification]',
       
       // Section II - Required for Design Type 1 Projects
-      projectDesignReviewRequired: questionnaireData?.projectDesignReviewRequired || 'Yes',
-      majorModificationEvaluationRequired: questionnaireData?.majorModificationEvaluationRequired || 'Yes',
-      safetyInDesignStrategyRequired: questionnaireData?.safetyInDesignStrategyRequired || 'Yes',
+      projectDesignReviewRequired: questionnaireData?.projectDesignReviewRequired || 'TBD',
+      majorModificationEvaluationRequired: questionnaireData?.majorModificationEvaluationRequired || 'TBD',
+      safetyInDesignStrategyRequired: questionnaireData?.safetyInDesignStrategyRequired || 'TBD',
       
       // Scope of Work
       description: questionnaireData?.description || analysis.analysis,
-      justification: questionnaireData?.justification || 'Critical safety system upgrade required to meet current regulatory standards and improve emergency response capabilities. Enhanced monitoring and diagnostics will reduce maintenance downtime and improve system reliability.',
-      proposedSolution: questionnaireData?.proposedSolution || questionnaireData?.scopeOfWork || 'Install new digital control panel with enhanced monitoring capabilities, remote diagnostics, and improved response times. Includes new cable runs, updated software logic, and integration with existing plant protection system.',
-      workLocation: questionnaireData?.workLocation || 'Emergency Power Building, Control Room',
+      justification: questionnaireData?.justification || analysis.analysis || '[Provide justification for the modification]',
+      proposedSolution: questionnaireData?.proposedSolution || questionnaireData?.scopeOfWork || '[Detailed description of the modification]',
+      workLocation: questionnaireData?.workLocation || '[Specific location/area]',
       
       // Design Input Record
       designInputs: questionnaireData?.designInputs || 'AI analysis with regulatory compliance review, Nuclear Regulatory Guidelines, DOE Standards',
@@ -737,25 +812,25 @@ class MTDocumentService {
         environmentalRisk: analysis.riskAssessment.environmentalRisk || 'High',
         operationalRisk: analysis.riskAssessment.operationalRisk || 'High',
         riskFactors: analysis.riskAssessment.riskFactors || ['Safety system modification', 'Emergency power backup', 'Digital control integration'],
-        mitigationRecommendations: analysis.riskAssessment.mitigationRecommendations || ['Comprehensive testing', 'Operator training', 'Backup procedures']
+        mitigationRecommendations: analysis.riskAssessment.mitigationRecommendations || []
       } : {
-        overallRisk: 'Very High',
-        safetyRisk: 'Very High',
-        environmentalRisk: 'High', 
-        operationalRisk: 'High',
-        riskFactors: ['Safety system modification', 'Emergency power backup', 'Digital control integration'],
-        mitigationRecommendations: ['Comprehensive testing', 'Operator training', 'Backup procedures']
+        overallRisk: '',
+        safetyRisk: '',
+        environmentalRisk: '', 
+        operationalRisk: '',
+        riskFactors: [],
+        mitigationRecommendations: []
       },
       
       // Design Output Record - Section VI  
-      workPackageNumbers: questionnaireData?.workPackageNumbers || 'WP-2024-001, WP-2024-002',
-      otherOutputs: questionnaireData?.otherOutputs || 'Updated drawings and specifications, Installation procedures, Testing protocols, Operator training materials',
+      workPackageNumbers: questionnaireData?.workPackageNumbers || '',
+      otherOutputs: questionnaireData?.otherOutputs || '',
       
       // Impact Assessment - Section V & VII
-      safetyImpacts: questionnaireData?.safetyImpacts || 'Enhanced emergency response capabilities, improved system reliability',
-      operationalImpacts: questionnaireData?.operationalImpacts || 'Temporary outage during installation, improved long-term reliability',
-      maintenanceImpacts: questionnaireData?.maintenanceImpacts || 'Reduced maintenance requirements, remote diagnostic capabilities',
-      otherImpacts: questionnaireData?.otherImpacts || 'Review of operating procedures required, operator training needed, updated maintenance procedures',
+      safetyImpacts: questionnaireData?.safetyImpacts || '',
+      operationalImpacts: questionnaireData?.operationalImpacts || '',
+      maintenanceImpacts: questionnaireData?.maintenanceImpacts || '',
+      otherImpacts: questionnaireData?.otherImpacts || '',
       
       // Approval Information
       preparedBy: questionnaireData?.preparedBy || 'MT Analysis System',

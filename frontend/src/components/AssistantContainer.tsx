@@ -97,64 +97,13 @@ export const AssistantContainer: React.FC = () => {
           />
         );
         
-      case 'fsar':
-        return (
-          <ComingSoonAssistant
-            name="📖 FSAR Assistant"
-            icon="📖"
-            description="Final Safety Analysis Report updates and impact analysis for nuclear facility changes"
-            features={[
-              "FSAR section impact analysis",
-              "Cross-reference validation",
-              "Safety analysis methodology review",
-              "Chapter consistency checking",
-              "Regulatory compliance verification",
-              "Professional FSAR update generation"
-            ]}
-          />
-        );
-        
-      case 'techspec':
-        return (
-          <ComingSoonAssistant
-            name="🔍 Tech Spec Assistant"
-            icon="🔍"
-            description="Technical Specification compliance analysis and surveillance test evaluation"
-            features={[
-              "Tech Spec applicability analysis",
-              "Surveillance requirement evaluation",
-              "Limiting Condition for Operation (LCO) review",
-              "Operability determination support",
-              "Regulatory compliance validation",
-              "Professional Tech Spec documentation"
-            ]}
-          />
-        );
-        
-      case 'license':
-        return (
-          <ComingSoonAssistant
-            name="📄 License Amendment Assistant"
-            icon="📄"
-            description="License Amendment Request preparation and regulatory analysis"
-            features={[
-              "LAR package preparation",
-              "No Significant Hazards Consideration analysis",
-              "Environmental assessment support",
-              "Regulatory justification development",
-              "NRC communication templates",
-              "Professional LAR documentation"
-            ]}
-          />
-        );
-        
       default:
         return <MTAnalyzerWrapper />;
     }
   };
 
   return (
-    <div className="nuclear-platform">
+    <div className="nuclear-platform" suppressHydrationWarning>
       <AssistantNavigation 
         activeAssistant={activeAssistant}
         onAssistantChange={setActiveAssistant}

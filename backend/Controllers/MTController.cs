@@ -7,13 +7,13 @@ namespace MTAnalyzer.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class EnhancedMTController : ControllerBase
+    public class MTController : ControllerBase
     {
         private readonly IAzureOpenAIService _aiService;
         private readonly IMTDecisionEngine _decisionEngine;
         private readonly IIntelligentMTService _intelligentService;
 
-        public EnhancedMTController(
+        public MTController(
             IAzureOpenAIService aiService, 
             IMTDecisionEngine decisionEngine,
             IIntelligentMTService intelligentService)

@@ -200,16 +200,6 @@ class MTAnalyzerAPI {
     return { guidance: 'MT guidance system available', references: [] };
   }
 
-  // Generate sample MT input
-  async generateSampleInput(): Promise<MTAnalysisRequest> {
-    const response = await apiClient.get('/mtanalysis/health');
-    return {
-      problemDescription: 'Sample problem description',
-      isPhysicalChange: true,
-      isTemporary: false
-    };
-  }
-
   // Get Figure 1 decision tree steps
   async getFigure1Steps(currentAnswers: Partial<MTAnalysisRequest>): Promise<{
     currentStep: string;
