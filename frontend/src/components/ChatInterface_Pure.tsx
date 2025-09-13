@@ -171,6 +171,10 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
   const [currentChatId, setCurrentChatId] = useState<string>('');
   const [sidebarOpen, setSidebarOpen] = useState(false); // Sidebar closed by default
   
+  // Rename functionality state
+  const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  
   // Current Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -714,6 +718,56 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
     }
   };
 
+  // Rename chat
+  const renameChat = (chatId: string, newTitle: string) => {
+    if (!newTitle.trim()) return;
+    
+    const updatedHistories = chatHistories.map(chat => 
+      chat.id === chatId 
+        ? { ...chat, title: newTitle.trim(), updatedAt: new Date() }
+        : chat
+    );
+    
+    setChatHistories(updatedHistories);
+    
+    // Persist to localStorage
+    try {
+      localStorage.setItem('mtChatHistories', JSON.stringify(updatedHistories));
+    } catch (error) {
+      console.error('Failed to rename chat:', error);
+    }
+  };
+
+  // Start renaming a chat
+  const startRename = (chatId: string, currentTitle: string) => {
+    setRenamingChatId(chatId);
+    setRenameValue(currentTitle);
+  };
+
+  // Confirm rename
+  const confirmRename = () => {
+    if (renamingChatId && renameValue.trim()) {
+      renameChat(renamingChatId, renameValue);
+    }
+    setRenamingChatId(null);
+    setRenameValue('');
+  };
+
+  // Cancel rename
+  const cancelRename = () => {
+    setRenamingChatId(null);
+    setRenameValue('');
+  };
+
+  // Handle rename input keypress
+  const handleRenameKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      confirmRename();
+    } else if (e.key === 'Escape') {
+      cancelRename();
+    }
+  };
+
   // Load chat histories from localStorage on component mount
   useEffect(() => {
     try {
@@ -903,31 +957,65 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
                   }`}
                 >
                   <div onClick={() => switchToChat(chat.id)} className="chat-item-content">
-                    <div className="chat-item-title">
-                      {chat.title}
-                    </div>
+                    {/* Chat title - editable when renaming */}
+                    {renamingChatId === chat.id ? (
+                      <div className="chat-rename-container">
+                        <input
+                          type="text"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={handleRenameKeyPress}
+                          onBlur={confirmRename}
+                          className="chat-rename-input"
+                          autoFocus
+                          maxLength={100}
+                        />
+                      </div>
+                    ) : (
+                      <div className="chat-item-title">
+                        {chat.title}
+                      </div>
+                    )}
+                    
                     <div className="chat-item-meta">
                       {chat.updatedAt.toLocaleDateString()} • {chat.messages.length} messages
                     </div>
                   </div>
                   
-                  {/* Delete button - only show on hover and not for current chat */}
-                  {chat.id !== currentChatId && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm('Delete this chat?')) {
-                          deleteChat(chat.id);
-                        }
-                      }}
-                      className="chat-delete-btn"
-                      title="Delete chat"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
+                  {/* Action buttons - show on hover */}
+                  <div className="chat-item-actions">
+                    {renamingChatId !== chat.id && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startRename(chat.id, chat.title);
+                          }}
+                          className="chat-action-btn chat-rename-btn"
+                          title="Rename chat"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete "${chat.title}"?`)) {
+                              deleteChat(chat.id);
+                            }
+                          }}
+                          className="chat-action-btn chat-delete-btn"
+                          title="Delete chat"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))
             )}
