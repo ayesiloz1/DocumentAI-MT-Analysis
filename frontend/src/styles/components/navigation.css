@@ -32,14 +32,60 @@
   background: #f3f4f6;
 }
 
-.top-bar-title-section h1 {
+.top-bar-title-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Logo placeholder styles */
+.header-logo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  border-radius: 0.5rem;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.header-logo-placeholder:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.logo-placeholder-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.logo-placeholder-text {
+  position: absolute;
+  bottom: -18px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: #9ca3af;
+  text-align: center;
+  width: 100%;
+  letter-spacing: 0.05em;
+}
+
+.header-title-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title-content h1 {
   font-size: 1.125rem;
   font-weight: 600;
   color: #111827;
   margin: 0;
 }
 
-.top-bar-title-section p {
+.header-title-content p {
   font-size: 0.75rem;
   color: #6b7280;
   margin: 0;

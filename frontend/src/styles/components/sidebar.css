@@ -25,6 +25,49 @@
   border-bottom: 1px solid #374151;
 }
 
+/* Document AI Logo in sidebar */
+.sidebar-logo-section {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.sidebar-logo-placeholder {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #1f2937;
+  border: 2px dashed #4b5563;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.sidebar-logo-placeholder:hover {
+  background: #374151;
+  border-color: #6b7280;
+  transform: translateY(-1px);
+}
+
+.sidebar-logo-icon {
+  font-size: 2rem;
+  line-height: 1;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logo-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9ca3af;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
 .sidebar-header-top {
   display: flex;
   align-items: center;

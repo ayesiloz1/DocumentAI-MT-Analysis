@@ -309,6 +309,22 @@ class MTDocumentService {
     </style>
     
     <div class="mt-document-container">
+      <!-- GENERATED DOCUMENT WARNING -->
+      <div style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 12px; margin-bottom: 16px; border-radius: 6px;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+          <span style="color: #d97706; font-size: 18px; margin-right: 8px;">⚠️</span>
+          <strong style="color: #92400e; font-size: 14px;">GENERATED DOCUMENT - REQUIRES ENGINEERING REVIEW</strong>
+        </div>
+        <p style="color: #92400e; font-size: 11px; margin: 0; line-height: 1.4;">
+          <strong>WARNING:</strong> This Modification Traveler was automatically generated using AI analysis and requires thorough engineering review and validation before use. 
+          All technical data, safety classifications, and regulatory requirements must be verified by qualified nuclear engineers. 
+          This document does not constitute approved work authorization and must not be used for actual modification work without proper review, approval, and signature by authorized personnel.
+        </p>
+        <p style="color: #92400e; font-size: 10px; margin: 4px 0 0 0; font-style: italic;">
+          Generated: ${new Date().toLocaleString()} | System: Enhanced MT Analysis Platform v2.0
+        </p>
+      </div>
+      
       <!-- Header with form number and title -->
       <div class="mt-form-header">${this.formConfig.formNumber} ${this.formConfig.formRevision} ${this.formConfig.formDate} 1 of ${this.formConfig.pageCount}</div>
       
@@ -352,7 +368,7 @@ class MTDocumentService {
           <td class="mt-header-cell" style="width: 40%;">3. Requested Completion Date (Optional):</td>
           <td style="width: 25%;">${this.formatFieldValue(data.requestedCompletionDate, '')}</td>
           <td class="mt-header-cell" style="width: 20%;">4. CACN (optional)</td>
-          <td style="width: 15%;"></td>
+          <td style="width: 15%;">${this.formatFieldValue(data.cacn, '')}</td>
         </tr>
         <tr>
           <td class="mt-header-cell">5. Project Number: <span class="mt-checkbox">☐</span></td>
@@ -363,9 +379,9 @@ class MTDocumentService {
         <tr>
           <td colspan="2"></td>
           <td>
-            <span class="mt-checkbox">☐</span> I <span class="mt-checkbox">☐</span> II <span class="mt-checkbox">☐</span> III <span class="mt-checkbox">☐</span> IV <span class="mt-checkbox">☐</span> V <span class="mt-checkbox">☐</span> VI
+            ${this.renderDesignTypeCheckboxes(data.designType)}
           </td>
-          <td></td>
+          <td>${this.formatFieldValue(data.projectType, '')}</td>
         </tr>
       </table>
 
@@ -417,13 +433,13 @@ class MTDocumentService {
         </tr>
         <tr>
           <td>
-            <span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No <span class="mt-checkbox">☐</span> N/A
+            ${this.renderCheckboxes(data.projectDesignReviewRequired, ['Yes', 'No', 'N/A'])}
           </td>
           <td>
-            <span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No <span class="mt-checkbox">☐</span> N/A
+            ${this.renderCheckboxes(data.majorModificationEvaluationRequired, ['Yes', 'No', 'N/A'])}
           </td>
           <td>
-            <span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No <span class="mt-checkbox">☐</span> N/A
+            ${this.renderCheckboxes(data.safetyInDesignStrategyRequired, ['Yes', 'No', 'N/A'])}
           </td>
         </tr>
       </table>
@@ -491,9 +507,9 @@ class MTDocumentService {
       <!-- Section V: Classification -->
       <table class="mt-table">
         <tr>
-          <td class="mt-header-cell" style="width: 33%;">15. Preliminary Safety<br>Classification: <span class="mt-checkbox">☐</span> SC <span class="mt-checkbox">☐</span> SS <span class="mt-checkbox">☐</span> GS<br><span class="mt-checkbox">☐</span> N/A</td>
-          <td class="mt-header-cell" style="width: 33%;">15a. Environmental Risk:<br>(TFC-ENG-DESIGN-C-52 Att. D)<br><span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No</td>
-          <td class="mt-header-cell" style="width: 34%;">15b. Radiological Risk:<br>(TFC-ENG-DESIGN-C-52 Att. D)<br><span class="mt-checkbox">☐</span> Yes <span class="mt-checkbox">☐</span> No</td>
+          <td class="mt-header-cell" style="width: 33%;">15. Preliminary Safety<br>Classification:<br>${this.renderCheckboxes(data.preliminarySafetyClassification, ['SC', 'SS', 'GS', 'N/A'])}</td>
+          <td class="mt-header-cell" style="width: 33%;">15a. Environmental Risk:<br>(TFC-ENG-DESIGN-C-52 Att. D)<br>${this.renderCheckboxes(data.environmentalRisk, ['Yes', 'No'])}</td>
+          <td class="mt-header-cell" style="width: 34%;">15b. Radiological Risk:<br>(TFC-ENG-DESIGN-C-52 Att. D)<br>${this.renderCheckboxes(data.radiologicalRisk, ['Yes', 'No'])}</td>
         </tr>
       </table>
 
@@ -503,8 +519,8 @@ class MTDocumentService {
           <td class="mt-header-cell" style="width: 50%;">18. Approval Designators</td>
         </tr>
         <tr>
-          <td style="height: 40px;"></td>
-          <td style="height: 40px;"></td>
+          <td style="height: 40px;">${this.formatFieldValue(data.hazardCategory, '')}</td>
+          <td style="height: 40px;">${this.formatFieldValue(data.approvalDesignators, '')}</td>
         </tr>
       </table>
 
@@ -725,11 +741,20 @@ class MTDocumentService {
 
   // Update document data progressively
   updateDocument(data: Partial<MTDocumentData>): void {
+    console.log('🔍 MT Document Service - Received data:', data);
+    console.log('🔍 MT Document Service - Current documentData before update:', this.documentData);
+    
     this.documentData = { ...this.documentData, ...data };
+    
+    console.log('🔍 MT Document Service - Updated documentData:', this.documentData);
+    
     const progress = this.calculateProgress();
     
     // Generate and notify preview update
     const previewHTML = this.generatePreviewHTML();
+    console.log('🔍 MT Document Service - Generated HTML length:', previewHTML.length);
+    console.log('🔍 MT Document Service - HTML preview (first 500 chars):', previewHTML.substring(0, 500));
+    
     this.documentPreviewCallbacks.forEach(callback => callback(previewHTML));
     
     // Notify progress update

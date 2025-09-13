@@ -169,7 +169,7 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
   // Chat History State Management
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string>('');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Sidebar closed by default
   
   // Current Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -180,6 +180,10 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Paper plane animation state
+  const [showPaperPlane, setShowPaperPlane] = useState(false);
+  const [paperPlaneKey, setPaperPlaneKey] = useState(0);
 
   // Initialize MT Document Service
   const [mtDocumentService, setMtDocumentService] = useState<any>(null);
@@ -272,6 +276,7 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
             const mtData: any = {
               title: extractedTitle,
               projectNumber: extractedProjectNumber,
+              mtNumber: extractedProjectNumber, // Use same as project number for MT number
               problemDescription: message, // Use the original user message
               timestamp: new Date().toISOString()
             };
@@ -287,27 +292,54 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
             const fullText = (message + ' ' + originalResponse).toLowerCase();
             if (fullText.includes('safety class') || fullText.includes('safety-class') || 
                 fullText.includes('sc ') || fullText.includes('10 cfr 50 appendix b') ||
-                fullText.includes('reactor coolant pressure boundary') || fullText.includes('safety-related')) {
+                fullText.includes('reactor coolant pressure boundary') || fullText.includes('safety-related') ||
+                fullText.includes('safety-critical') || fullText.includes('reactor coolant system') ||
+                fullText.includes('emergency diesel generator') || fullText.includes('emergency core cooling') ||
+                fullText.includes('containment isolation') || fullText.includes('class 1e')) {
               mtData.preliminarySafetyClassification = 'SC'; // Safety Class
+              mtData.environmentalRisk = 'Yes'; // Safety class typically has environmental considerations
+              mtData.radiologicalRisk = 'Yes'; // Reactor systems have radiological risk
             } else if (fullText.includes('safety significant') || fullText.includes('ss ') ||
-                      fullText.includes('safety-significant')) {
+                      fullText.includes('safety-significant') || fullText.includes('chemical volume control') ||
+                      fullText.includes('cvcs') || fullText.includes('auxiliary feedwater')) {
               mtData.preliminarySafetyClassification = 'SS';
+              mtData.environmentalRisk = 'No';
+              mtData.radiologicalRisk = 'Yes';
             } else if (fullText.includes('general service') || fullText.includes('gs ') ||
                       fullText.includes('non-safety')) {
               mtData.preliminarySafetyClassification = 'GS';
+              mtData.environmentalRisk = 'No';
+              mtData.radiologicalRisk = 'No';
             }
             
             // Enhanced design type detection
-            if (fullText.includes('digital') || fullText.includes('analog to digital') ||
-                fullText.includes('50.59') || fullText.includes('type i') ||
-                fullText.includes('type 1') || fullText.includes('design type 1')) {
+            if (fullText.includes('type ii') || fullText.includes('type 2') || 
+                fullText.includes('design type 2') || fullText.includes('like-for-like') ||
+                fullText.includes('identical model') || fullText.includes('same manufacturer') ||
+                fullText.includes('functionally equivalent') || fullText.includes('direct replacement') ||
+                fullText.includes('identical westinghouse') || fullText.includes('same specifications') ||
+                fullText.includes('no design changes') || fullText.includes('direct swap')) {
+              mtData.designType = 'Type II';
+              mtData.projectDesignReviewRequired = 'No';
+              mtData.majorModificationEvaluationRequired = 'No';
+              mtData.safetyInDesignStrategyRequired = 'No';
+              mtData.hazardCategory = 'Category 3'; // Like-for-like replacements typically Category 3
+            } else if (fullText.includes('digital') || fullText.includes('analog to digital') ||
+                fullText.includes('50.59') || fullText.includes('smart valve') || 
+                fullText.includes('digital smart valve') || fullText.includes('smart motor-operated') ||
+                fullText.includes('programmable logic controller') || fullText.includes('plc')) {
               mtData.designType = 'Type I';
               mtData.projectDesignReviewRequired = 'Yes';
               mtData.majorModificationEvaluationRequired = 'Yes';
               mtData.safetyInDesignStrategyRequired = 'Yes';
-            } else if (fullText.includes('type ii') || fullText.includes('type 2') || 
-                      fullText.includes('design type 2')) {
-              mtData.designType = 'Type II';
+              mtData.hazardCategory = 'Category 2'; // Digital modifications typically Category 2
+            } else if (fullText.includes('type i') || fullText.includes('type 1') || 
+                      fullText.includes('design type 1')) {
+              mtData.designType = 'Type I';
+              mtData.projectDesignReviewRequired = 'Yes';
+              mtData.majorModificationEvaluationRequired = 'Yes';
+              mtData.safetyInDesignStrategyRequired = 'Yes';
+              mtData.hazardCategory = 'Category 2';
             } else if (fullText.includes('type iii') || fullText.includes('type 3') ||
                       fullText.includes('design type 3')) {
               mtData.designType = 'Type III';
@@ -367,26 +399,37 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
               mtData.relatedEquipment = 'Emergency Diesel Generator, Control Panels, Cable Runs';
               mtData.priority = 'High';
               mtData.projectType = 'Safety System Upgrade';
+              mtData.cacn = 'EDG-CTRL-2025';
             } else if (messageLower.includes('reactor coolant pump') || messageLower.includes('rcp') || 
                       messageLower.includes('seal injection') || messageLower.includes('fcv-')) {
-              mtData.relatedSystems = 'Chemical Volume Control System (CVCS), Plant Protection System';
-              mtData.relatedBuildings = 'Reactor Building';
-              mtData.relatedEquipment = 'Reactor Coolant Pump, Flow Control Valve, CVCS Components';
+              mtData.relatedSystems = 'Chemical Volume Control System (CVCS), Reactor Coolant System (RCS)';
+              mtData.relatedBuildings = 'Reactor Building, Auxiliary Building';
+              mtData.relatedEquipment = 'Reactor Coolant Pump, Flow Control Valve FCV-001, CVCS Components';
               mtData.priority = 'High';
               mtData.projectType = 'Safety System Component Replacement';
+              mtData.cacn = 'RCS-VALVE-2025';
             } else if (messageLower.includes('emergency core cooling') || messageLower.includes('eccs')) {
               mtData.relatedSystems = 'Emergency Core Cooling System (ECCS)';
               mtData.relatedBuildings = 'Reactor Building, Auxiliary Building';
               mtData.relatedEquipment = 'ECCS Motors, Pumps, Valves';
               mtData.priority = 'High';
               mtData.projectType = 'Safety System Component Replacement';
+              mtData.cacn = 'ECCS-MOTOR-2025';
+            } else if (messageLower.includes('reactor coolant system') || messageLower.includes('valve') && messageLower.includes('safety-critical')) {
+              mtData.relatedSystems = 'Reactor Coolant System (RCS), Plant Protection System';
+              mtData.relatedBuildings = 'Reactor Building';
+              mtData.relatedEquipment = 'Safety-Critical Valve, Associated Piping, Control Systems';
+              mtData.priority = 'High';
+              mtData.projectType = 'Safety System Component Replacement';
+              mtData.cacn = 'RCS-SAFETY-2025';
             } else {
-              // Generic defaults
-              mtData.relatedSystems = '[Related Systems]';
-              mtData.relatedBuildings = '[Related Buildings/Facilities]';
-              mtData.relatedEquipment = '[Related Equipment]';
-              mtData.priority = '[High/Medium/Low]';
-              mtData.projectType = '[Project Type]';
+              // Generic defaults with more specific placeholders
+              mtData.relatedSystems = 'To Be Determined During Engineering Review';
+              mtData.relatedBuildings = 'To Be Determined During Site Survey';
+              mtData.relatedEquipment = 'To Be Determined During Component Analysis';
+              mtData.priority = 'Medium';
+              mtData.projectType = 'Component Modification';
+              mtData.cacn = 'TBD-2025';
             }
             
             // Enhanced project type refinement for more specific descriptions
@@ -424,6 +467,7 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
             }
             
             // Update the document service with live data
+            console.log('🚀 Sending data to MT Document Service:', mtData);
             mtDocumentService.updateDocument(mtData);
             setCurrentMTData(mtData);
             console.log('Live MT document updated with parsed analysis data:', mtData);
@@ -460,6 +504,16 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Trigger paper plane animation
+    setShowPaperPlane(true);
+    setPaperPlaneKey(prev => prev + 1);
+    
+    // Hide paper plane after animation completes
+    setTimeout(() => {
+      setShowPaperPlane(false);
+    }, 3500); // Increased to match new 3.5s animation
+    
     setIsLoading(true);
 
     try {
@@ -724,6 +778,91 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
 
   return (
     <div className="chat-layout">
+      {/* Cool Spaceship Animation */}
+      {showPaperPlane && (
+        <div className="spaceship-container">
+          <div key={paperPlaneKey} className="spaceship spaceship--launch">
+            {/* Energy Trail */}
+            <div className="spaceship-trail"></div>
+            
+            {/* Main Spaceship */}
+            <div className="spaceship-body">
+              <svg className="spaceship-svg" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Main Hull */}
+                <ellipse cx="30" cy="12.5" rx="24" ry="5" fill="#1e293b" stroke="#334155" strokeWidth="0.8"/>
+                
+                {/* Hull Details */}
+                <ellipse cx="30" cy="12.5" rx="20" ry="3.5" fill="#475569" opacity="0.8"/>
+                <ellipse cx="30" cy="12.5" rx="16" ry="2.5" fill="#64748b" opacity="0.6"/>
+                
+                {/* Command Bridge - AT FRONT (RIGHT SIDE for left-to-right movement) */}
+                <ellipse cx="48" cy="12.5" rx="8" ry="3.5" fill="#374151" stroke="#4b5563" strokeWidth="0.4"/>
+                <ellipse cx="51" cy="12.5" rx="5" ry="2" fill="#06b6d4" opacity="0.7"/>
+                
+                {/* Engine Pods - AT BACK (LEFT SIDE) */}
+                <ellipse cx="15" cy="9" rx="5" ry="2" fill="#1e293b" stroke="#334155" strokeWidth="0.4"/>
+                <ellipse cx="15" cy="16" rx="5" ry="2" fill="#1e293b" stroke="#334155" strokeWidth="0.4"/>
+                
+                {/* Engine Cores */}
+                <ellipse cx="12" cy="9" rx="2.5" ry="1" fill="#3b82f6">
+                  <animate attributeName="opacity" values="0.6;1;0.6" dur="0.8s" repeatCount="indefinite"/>
+                </ellipse>
+                <ellipse cx="12" cy="16" rx="2.5" ry="1" fill="#3b82f6">
+                  <animate attributeName="opacity" values="0.6;1;0.6" dur="0.8s" repeatCount="indefinite"/>
+                </ellipse>
+                
+                {/* Engine Glow */}
+                <ellipse cx="9" cy="9" rx="3" ry="1.5" fill="#06b6d4" opacity="0.5">
+                  <animate attributeName="opacity" values="0.3;0.8;0.3" dur="0.6s" repeatCount="indefinite"/>
+                </ellipse>
+                <ellipse cx="9" cy="16" rx="3" ry="1.5" fill="#06b6d4" opacity="0.5">
+                  <animate attributeName="opacity" values="0.3;0.8;0.3" dur="0.6s" repeatCount="indefinite"/>
+                </ellipse>
+                
+                {/* Navigation Lights */}
+                <circle cx="54" cy="10" r="0.8" fill="#ef4444">
+                  <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="54" cy="15" r="0.8" fill="#22c55e">
+                  <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite"/>
+                </circle>
+                
+                {/* Energy Conduits */}
+                <line x1="20" y1="12.5" x2="45" y2="12.5" stroke="#06b6d4" strokeWidth="0.8" opacity="0.6">
+                  <animate attributeName="opacity" values="0.3;0.9;0.3" dur="1.5s" repeatCount="indefinite"/>
+                </line>
+                <line x1="22" y1="11" x2="43" y2="11" stroke="#3b82f6" strokeWidth="0.4" opacity="0.4">
+                  <animate attributeName="opacity" values="0.2;0.7;0.2" dur="1.8s" repeatCount="indefinite"/>
+                </line>
+                <line x1="22" y1="14" x2="43" y2="14" stroke="#3b82f6" strokeWidth="0.4" opacity="0.4">
+                  <animate attributeName="opacity" values="0.2;0.7;0.2" dur="1.8s" repeatCount="indefinite"/>
+                </line>
+                
+                {/* Antenna Array */}
+                <rect x="57" y="11.5" width="3" height="2" fill="#64748b" stroke="#334155" strokeWidth="0.2"/>
+                <line x1="56" y1="10" x2="56" y2="14.5" stroke="#64748b" strokeWidth="0.2"/>
+                <line x1="55" y1="9.5" x2="55" y2="15" stroke="#64748b" strokeWidth="0.2"/>
+                
+                {/* Hull Paneling */}
+                <rect x="28" y="11" width="12" height="3" fill="none" stroke="#475569" strokeWidth="0.2" opacity="0.6"/>
+                <rect x="30" y="11.5" width="8" height="2" fill="none" stroke="#475569" strokeWidth="0.15" opacity="0.4"/>
+                
+                {/* Deflector Array */}
+                <ellipse cx="58" cy="12.5" rx="2.5" ry="1.5" fill="#7c3aed" opacity="0.3">
+                  <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2s" repeatCount="indefinite"/>
+                </ellipse>
+              </svg>
+            </div>
+            
+            {/* Spaceship Shadow */}
+            <div className="spaceship-shadow"></div>
+            
+            {/* Warp Field Effect */}
+            <div className="spaceship-warp"></div>
+          </div>
+        </div>
+      )}
+      
       {/* Sidebar */}
       <div className={`chat-sidebar ${sidebarOpen ? 'chat-sidebar--open' : 'chat-sidebar--closed'}`}>
         <div className="h-full flex flex-col">
@@ -811,8 +950,17 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
               </svg>
             </button>
             <div className="top-bar-title-section">
-              <h1>MT Analyzer Assistant</h1>
-              <p>Powered by Azure OpenAI GPT-4</p>
+              {/* Company Logo Placeholder */}
+              <div className="header-logo-placeholder">
+                {/* Insert your company logo image here */}
+                <div className="logo-placeholder-icon">🏭</div>
+                <span className="logo-placeholder-text">LOGO</span>
+              </div>
+              
+              <div className="header-title-content">
+                <h1>MT Analyzer Assistant</h1>
+                <p>Powered by Azure OpenAI GPT-4</p>
+              </div>
             </div>
           </div>
           
@@ -986,7 +1134,12 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
           </div>
         ))}
 
-        {isLoading && (
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* AI is thinking message - moved to bottom */}
+      {isLoading && (
+        <div className="border-t bg-gray-50 p-4">
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
               <Bot className="w-4 h-4" />
@@ -998,10 +1151,8 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
               </div>
             </div>
           </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
+        </div>
+      )}
 
       {/* File Preview */}
       {selectedFile && (
@@ -1097,7 +1248,8 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
       <MTDocumentModal
         isOpen={showDocumentModal}
         onClose={() => setShowDocumentModal(false)}
-        htmlContent={documentHTML}
+        documentHTML={documentHTML}
+        mtData={currentMTData}
         onDownloadPDF={handleDownloadPDF}
         onDownloadWord={handleDownloadWord}
       />
