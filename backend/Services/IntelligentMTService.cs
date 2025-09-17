@@ -46,8 +46,7 @@ namespace MTAnalyzer.Services
         private readonly IConfiguration _configuration;           // Configuration settings from appsettings.json
         private readonly ILogger<IntelligentMTService> _logger;   // Logger for debugging and monitoring
         private readonly IEmbeddingService _embeddingService;     // Service for text embeddings (similarity matching)
-        private readonly string _gpt4DeploymentName;             // Name of GPT-4 deployment in Azure
-        private readonly string _gpt4TurboDeploymentName;        // Name of GPT-4 Turbo deployment for faster responses
+        private readonly string _defaultDeploymentName;          // Default deployment name for all AI operations
 
         // ============================================================================
         // CONSTRUCTOR - DEPENDENCY INJECTION AND INITIALIZATION
@@ -72,10 +71,9 @@ namespace MTAnalyzer.Services
             // This client will be used for all GPT-4 API calls
             _openAIClient = new OpenAIClient(new Uri(endpoint!), new AzureKeyCredential(apiKey!));
             
-            // Get GPT-4 deployment names from configuration with fallback defaults
-            // These deployments must exist in your Azure OpenAI resource
-            _gpt4DeploymentName = _configuration["AzureOpenAI:ChatDeploymentName"] ?? "gpt-4";
-            _gpt4TurboDeploymentName = _configuration["AzureOpenAI:FastChatDeploymentName"] ?? "gpt-4-turbo";
+            // Get deployment name from configuration with fallback default
+            // This deployment must exist in your Azure OpenAI resource
+            _defaultDeploymentName = _configuration["AzureOpenAI:DeploymentName"] ?? "gpt-35-turbo";
         }
 
         // ============================================================================
@@ -95,10 +93,10 @@ namespace MTAnalyzer.Services
             // Build comprehensive prompt for GPT-4 (without search for cost savings)
             var prompt = BuildIntelligentAnalysisPrompt(userInput, embeddingClassification, mtTypeClassification);
 
-                // Use GPT-4 for intelligent analysis
+                // Use the configured deployment for intelligent analysis
                 var chatCompletionsOptions = new ChatCompletionsOptions()
                 {
-                    DeploymentName = _gpt4DeploymentName,
+                    DeploymentName = _defaultDeploymentName,
                     Messages = {
                         new ChatRequestSystemMessage(GetSystemPrompt()),
                         new ChatRequestUserMessage(prompt)
@@ -133,7 +131,7 @@ namespace MTAnalyzer.Services
 
                 var chatCompletionsOptions = new ChatCompletionsOptions()
                 {
-                    DeploymentName = _gpt4DeploymentName, // Use standard gpt-4 for consistency
+                    DeploymentName = _defaultDeploymentName, // Use configured deployment for consistency
                     Messages = {
                         new ChatRequestSystemMessage(GetConversationSystemPrompt()),
                         new ChatRequestUserMessage(prompt)
@@ -184,7 +182,7 @@ Respond with JSON:
 
                 var chatCompletionsOptions = new ChatCompletionsOptions()
                 {
-                    DeploymentName = _gpt4DeploymentName,
+                    DeploymentName = _defaultDeploymentName,
                     Messages = {
                         new ChatRequestSystemMessage("You are an expert nuclear facility modification analyst. Provide accurate MT classifications with detailed reasoning."),
                         new ChatRequestUserMessage(prompt)
@@ -234,7 +232,7 @@ Return as JSON array of strings: [""detail1"", ""detail2"", ...]";
 
                 var chatCompletionsOptions = new ChatCompletionsOptions()
                 {
-                    DeploymentName = _gpt4TurboDeploymentName,
+                    DeploymentName = _defaultDeploymentName,
                     Messages = {
                         new ChatRequestSystemMessage("You are an expert at extracting technical equipment information from descriptions."),
                         new ChatRequestUserMessage(prompt)
@@ -278,7 +276,7 @@ Provide practical, expert-level guidance for nuclear facility modifications.";
 
                 var chatCompletionsOptions = new ChatCompletionsOptions()
                 {
-                    DeploymentName = _gpt4TurboDeploymentName,
+                    DeploymentName = _defaultDeploymentName,
                     Messages = {
                         new ChatRequestSystemMessage("You are a senior nuclear facility modification expert providing actionable recommendations."),
                         new ChatRequestUserMessage(prompt)

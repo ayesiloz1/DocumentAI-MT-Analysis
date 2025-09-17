@@ -173,12 +173,15 @@ temp/
 # ==================================================================
 ## Environment Variables (CRITICAL FOR NUCLEAR FACILITIES)
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
 ## Application Settings (SENSITIVE AZURE OPENAI KEYS)
+# Note: appsettings.json is now safe to commit (no secrets)
+# Secrets are stored in User Secrets (dev) or Environment Variables (prod)
 appsettings.Development.json
 appsettings.Production.json
 appsettings.Local.json

@@ -3,6 +3,10 @@ using MTAnalyzer.Services;  // Our custom service classes
 using MTAnalyzer.Middleware; // Our custom middleware classes
 using Azure.AI.OpenAI;      // Azure OpenAI SDK for GPT integration
 using Azure;                // Azure SDK core functionality
+using DotNetEnv;           // For loading .env files
+
+// Load environment variables from .env file
+Env.Load();
 
 // Create a web application builder - this is the foundation of our ASP.NET Core app
 // The builder pattern allows us to configure services and middleware before building the app

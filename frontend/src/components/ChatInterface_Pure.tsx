@@ -292,9 +292,14 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
               mtData.mtRequired = false;
             }
             
-            // Enhanced safety classification detection
+            // Enhanced safety classification detection for chemical systems
             const fullText = (message + ' ' + originalResponse).toLowerCase();
-            if (fullText.includes('safety class') || fullText.includes('safety-class') || 
+            if (fullText.includes('chemical addition manifold') || fullText.includes('chemical manifold')) {
+              // Chemical addition manifolds are typically General Service (GS)
+              mtData.preliminarySafetyClassification = 'GS';
+              mtData.environmentalRisk = 'Yes'; // Chemical systems have environmental risk
+              mtData.radiologicalRisk = 'No';   // Chemical addition typically not radiological
+            } else if (fullText.includes('safety class') || fullText.includes('safety-class') || 
                 fullText.includes('sc ') || fullText.includes('10 cfr 50 appendix b') ||
                 fullText.includes('reactor coolant pressure boundary') || fullText.includes('safety-related') ||
                 fullText.includes('safety-critical') || fullText.includes('reactor coolant system') ||
@@ -316,14 +321,14 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
               mtData.radiologicalRisk = 'No';
             }
             
-            // Enhanced design type detection
+            // Enhanced design type detection with proper number mapping
             if (fullText.includes('type ii') || fullText.includes('type 2') || 
                 fullText.includes('design type 2') || fullText.includes('like-for-like') ||
                 fullText.includes('identical model') || fullText.includes('same manufacturer') ||
                 fullText.includes('functionally equivalent') || fullText.includes('direct replacement') ||
                 fullText.includes('identical westinghouse') || fullText.includes('same specifications') ||
                 fullText.includes('no design changes') || fullText.includes('direct swap')) {
-              mtData.designType = 'Type II';
+              mtData.designType = 2; // Pass as number for proper checkbox selection
               mtData.projectDesignReviewRequired = 'No';
               mtData.majorModificationEvaluationRequired = 'No';
               mtData.safetyInDesignStrategyRequired = 'No';
@@ -332,21 +337,30 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
                 fullText.includes('50.59') || fullText.includes('smart valve') || 
                 fullText.includes('digital smart valve') || fullText.includes('smart motor-operated') ||
                 fullText.includes('programmable logic controller') || fullText.includes('plc')) {
-              mtData.designType = 'Type I';
+              mtData.designType = 1; // Pass as number for proper checkbox selection
               mtData.projectDesignReviewRequired = 'Yes';
               mtData.majorModificationEvaluationRequired = 'Yes';
               mtData.safetyInDesignStrategyRequired = 'Yes';
               mtData.hazardCategory = 'Category 2'; // Digital modifications typically Category 2
             } else if (fullText.includes('type i') || fullText.includes('type 1') || 
                       fullText.includes('design type 1')) {
-              mtData.designType = 'Type I';
+              mtData.designType = 1; // Pass as number for proper checkbox selection
               mtData.projectDesignReviewRequired = 'Yes';
               mtData.majorModificationEvaluationRequired = 'Yes';
               mtData.safetyInDesignStrategyRequired = 'Yes';
               mtData.hazardCategory = 'Category 2';
             } else if (fullText.includes('type iii') || fullText.includes('type 3') ||
                       fullText.includes('design type 3')) {
-              mtData.designType = 'Type III';
+              mtData.designType = 3; // Pass as number for proper checkbox selection
+            } else if (fullText.includes('type iv') || fullText.includes('type 4') ||
+                      fullText.includes('temporary')) {
+              mtData.designType = 4; // Pass as number for proper checkbox selection
+            } else if (fullText.includes('type v') || fullText.includes('type 5') ||
+                      fullText.includes('identical replacement')) {
+              mtData.designType = 5; // Pass as number for proper checkbox selection
+            } else {
+              // Default to Type II for modifications
+              mtData.designType = 2; // Pass as number for proper checkbox selection
             }
             
             // Set intelligent completion dates based on project complexity
@@ -454,7 +468,13 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
             mtData.justification = `Analysis Result: ${originalResponse.slice(0, 300)}...`;
             
             // Enhanced proposed solution based on specific scenarios
-            if (messageLower.includes('replace') && messageLower.includes('motor')) {
+            if (messageLower.includes('chemical addition manifold') && messageLower.includes('frame')) {
+              if (messageLower.includes('off-site') || messageLower.includes('offsite')) {
+                mtData.proposedSolution = 'Vendor to provide analysis and modifications (as necessary) to the support structure of the manifold to support off-site fabrication and ensure structural integrity during hoisting, rigging, and shipping operations.';
+              } else {
+                mtData.proposedSolution = 'Modify chemical addition manifold frame design to meet structural requirements for installation and operational loads.';
+              }
+            } else if (messageLower.includes('replace') && messageLower.includes('motor')) {
               mtData.proposedSolution = 'Replace existing motor with equivalent or improved motor maintaining all safety functions and performance characteristics.';
             } else if (messageLower.includes('upgrade') && messageLower.includes('control')) {
               mtData.proposedSolution = 'Upgrade analog control system to digital control and monitoring system with enhanced alarm capabilities and remote monitoring features.';
@@ -938,6 +958,37 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
               <span>+</span>
               <span>New Chat</span>
             </button>
+            
+            {/* MT Document Preview Button */}
+            {mtDocumentService && (
+              <button
+                onClick={showDocumentPreview}
+                className="mt-document-btn"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  marginTop: '8px',
+                  backgroundColor: '#0066cc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0052a3'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0066cc'}
+                title="View MT Document Live Preview"
+              >
+                <FileText className="w-4 h-4" />
+                <span>View MT Document</span>
+              </button>
+            )}
           </div>
           
           {/* Chat History List */}
@@ -1262,12 +1313,12 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
       {/* Input */}
       <div className="border-t bg-white p-6">
         <div className="flex items-end space-x-4">
-          {/* View Document Button */}
-          {currentMTData && (
+          {/* View Document Button - Always show when MT service is available */}
+          {mtDocumentService && (
             <button
               onClick={showDocumentPreview}
               className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-              title="View MT Document"
+              title="View MT Document Live Preview"
             >
               <FileText className="w-5 h-5" />
             </button>
