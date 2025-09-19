@@ -1,5 +1,41 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 
+// Checkbox rendering helper functions
+function getDesignTypeCheckboxes(designType?: string): string {
+  const types = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+  const selectedType = extractDesignTypeFromString(designType);
+  
+  return types.map(type => {
+    const isSelected = type === selectedType;
+    return `${isSelected ? '☑' : '☐'} ${type}`;
+  }).join(' ');
+}
+
+function extractDesignTypeFromString(designType?: string): string {
+  if (!designType) return '';
+  const match = designType.match(/Type\s+([IVXLC]+)/i);
+  return match ? match[1].toUpperCase() : '';
+}
+
+function getYesNoCheckboxes(value?: string, includeNA: boolean = false): string {
+  const selected = value?.toLowerCase();
+  const yes = selected === 'yes' ? '☑' : '☐';
+  const no = selected === 'no' ? '☑' : '☐';
+  const na = includeNA ? (selected === 'n/a' ? '☑' : '☐') : '';
+  
+  return includeNA ? `${yes} Yes ${no} No ${na} N/A` : `${yes} Yes ${no} No`;
+}
+
+function getSafetyClassificationCheckboxes(value?: string): string {
+  const selected = value?.toUpperCase();
+  const sc = selected === 'SC' ? '☑' : '☐';
+  const ss = selected === 'SS' ? '☑' : '☐';
+  const gs = selected === 'GS' ? '☑' : '☐';
+  const na = selected === 'N/A' ? '☑' : '☐';
+  
+  return `${sc} SC ${ss} SS ${gs} GS ${na} N/A`;
+}
+
 // Import the MTDocumentData interface
 interface MTDocumentData {
   projectNumber?: string;
@@ -21,6 +57,23 @@ interface MTDocumentData {
   designType?: string;
   analysisPath?: string;
   confidence?: number;
+  
+  // Section I fields
+  relatedBuildings?: string;
+  relatedSystems?: string;
+  relatedEquipment?: string;
+  proposedSolution?: string;
+  
+  // Section II checkboxes
+  projectDesignReviewRequired?: 'Yes' | 'No' | 'N/A';
+  majorModificationEvaluationRequired?: 'Yes' | 'No' | 'N/A';
+  safetyInDesignStrategyRequired?: 'Yes' | 'No' | 'N/A';
+  
+  // Page 2 risk classifications
+  preliminarySafetyClassification?: 'SC' | 'SS' | 'GS' | 'N/A';
+  environmentalRisk?: 'Yes' | 'No';
+  radiologicalRisk?: 'Yes' | 'No';
+  
   riskAssessment?: {
     overallRisk: string;
     safetyRisk: string;
@@ -261,8 +314,13 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "6. Design Type:", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "☐ I ☐ II ☐ III ☐ IV ☐ V ☐ VI" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{designType}" })] }),
+                    new Paragraph({ 
+                      children: [
+                        new TextRun({ 
+                          text: `${getDesignTypeCheckboxes(data?.designType)} ${data?.designType || ''}` 
+                        })
+                      ] 
+                    }),
                   ],
                   width: { size: 35, type: WidthType.PERCENTAGE },
                 }),
@@ -303,21 +361,21 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "a. Related Building/Facilities ☐ N/A", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{relatedBuildings}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: data?.relatedBuildings || "To Be Determined During Site Survey" })] }),
                   ],
                   width: { size: 33, type: WidthType.PERCENTAGE },
                 }),
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "b. Related Systems ☐ N/A", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{relatedSystems}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: data?.relatedSystems || "To Be Determined During Engineering Review" })] }),
                   ],
                   width: { size: 33, type: WidthType.PERCENTAGE },
                 }),
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "c. Related Equipment ID Nos. (EIN) ☐ N/A", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{relatedEquipment}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: data?.relatedEquipment || "To Be Determined During Component Analysis" })] }),
                   ],
                   width: { size: 34, type: WidthType.PERCENTAGE },
                 }),
@@ -341,7 +399,7 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "9. Problem Description", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{problemDescription}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: data?.description || "[Detailed description of the modification problem or need]" })] }),
                     new Paragraph({ children: [new TextRun({ text: "" })] }), // Spacer
                     new Paragraph({ children: [new TextRun({ text: "" })] }), // Spacer
                   ],
@@ -366,7 +424,7 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "10. Justification", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{justification}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: data?.justification || "[Technical and business justification for the modification]" })] }),
                     new Paragraph({ children: [new TextRun({ text: "." })] }),
                     new Paragraph({ children: [new TextRun({ text: "" })] }), // Spacer
                   ],
@@ -403,24 +461,21 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "11a. Project Design Review Required (TFC-ENG-DESIGN-D-17.1)?", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "☐ Yes ☐ No ☐ N/A" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{designReviewRequired}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: getYesNoCheckboxes(data?.projectDesignReviewRequired, true) })] }),
                   ],
                   width: { size: 33, type: WidthType.PERCENTAGE },
                 }),
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "11b. Major Modification Evaluation Required (Use 1189 Checklist)?", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "☐ Yes ☐ No ☐ N/A" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{majorModificationEval}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: getYesNoCheckboxes(data?.majorModificationEvaluationRequired, true) })] }),
                   ],
                   width: { size: 33, type: WidthType.PERCENTAGE },
                 }),
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "11c. Safety In Design Strategy Required?", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "☐ Yes ☐ No ☐ N/A" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{safetyInDesign}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: getYesNoCheckboxes(data?.safetyInDesignStrategyRequired, true) })] }),
                   ],
                   width: { size: 34, type: WidthType.PERCENTAGE },
                 }),
@@ -456,7 +511,7 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "12. Proposed Solution", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{proposedSolution}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: data?.proposedSolution || "[Detailed description of the proposed modification solution]" })] }),
                     new Paragraph({ children: [new TextRun({ text: "" })] }), // Spacer
                     new Paragraph({ children: [new TextRun({ text: "" })] }), // Spacer
                   ],
@@ -627,8 +682,7 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "15. Preliminary Safety Classification:", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "☐ SC ☐ SS ☐ GS ☐ N/A" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{safetyClassification}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: getSafetyClassificationCheckboxes(data?.preliminarySafetyClassification) })] }),
                   ],
                   width: { size: 25, type: WidthType.PERCENTAGE },
                 }),
@@ -636,8 +690,7 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "16a. Environmental Risk:", bold: true })] }),
                     new Paragraph({ children: [new TextRun({ text: "(TFC-ENG-DESIGN-C-52 Att. D)" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "☐ Yes ☐ No" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{environmentalRisk}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: getYesNoCheckboxes(data?.environmentalRisk) })] }),
                   ],
                   width: { size: 25, type: WidthType.PERCENTAGE },
                 }),
@@ -645,17 +698,16 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "16b. Radiological Risk:", bold: true })] }),
                     new Paragraph({ children: [new TextRun({ text: "(TFC-ENG-DESIGN-C-52 Att. D)" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "☐ Yes ☐ No" })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{radiologicalRisk}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: getYesNoCheckboxes(data?.radiologicalRisk) })] }),
                   ],
                   width: { size: 25, type: WidthType.PERCENTAGE },
                 }),
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "17. Hazard Category", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{hazardCategory}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: data?.hazardCategory || "Category 3" })] }),
                     new Paragraph({ children: [new TextRun({ text: "18. Approval Designators", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: "{approvalDesignators}" })] }),
+                    new Paragraph({ children: [new TextRun({ text: (data as any)?.approvalDesignators || "Standard Modification" })] }),
                   ],
                   width: { size: 25, type: WidthType.PERCENTAGE },
                 }),

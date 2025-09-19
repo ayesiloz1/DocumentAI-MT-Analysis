@@ -48,6 +48,10 @@ namespace MTAnalyzer.Models
 
         [JsonProperty("confidence")]
         public double Confidence { get; set; }
+
+        // Enhanced form field auto-population
+        [JsonProperty("documentFields")]
+        public MTDocumentFields DocumentFields { get; set; } = new();
     }
 
     public class DesignInputsSummary
@@ -147,5 +151,94 @@ namespace MTAnalyzer.Models
 
         [JsonProperty("mitigationRecommendations")]
         public List<string> MitigationRecommendations { get; set; } = new();
+    }
+
+    // Enhanced document fields for auto-population
+    public class MTDocumentFields
+    {
+        // Section I - Request for Modification
+        [JsonProperty("relatedBuildings")]
+        public string RelatedBuildings { get; set; } = string.Empty;
+
+        [JsonProperty("relatedSystems")]
+        public string RelatedSystems { get; set; } = string.Empty;
+
+        [JsonProperty("relatedEquipment")]
+        public string RelatedEquipment { get; set; } = string.Empty;
+
+        [JsonProperty("proposedSolution")]
+        public string ProposedSolution { get; set; } = string.Empty;
+
+        // Section II - Required for Design Type 1 Projects (checkbox logic)
+        [JsonProperty("projectDesignReviewRequired")]
+        public string ProjectDesignReviewRequired { get; set; } = "N/A"; // Yes/No/N/A
+
+        [JsonProperty("majorModificationEvaluationRequired")]
+        public string MajorModificationEvaluationRequired { get; set; } = "N/A"; // Yes/No/N/A
+
+        [JsonProperty("safetyInDesignStrategyRequired")]
+        public string SafetyInDesignStrategyRequired { get; set; } = "N/A"; // Yes/No/N/A
+
+        // Page 2 - Risk Classifications (checkboxes)
+        [JsonProperty("preliminarySafetyClassification")]
+        public string PreliminarySafetyClassification { get; set; } = "GS"; // SC/SS/GS/N/A
+
+        [JsonProperty("environmentalRisk")]
+        public string EnvironmentalRisk { get; set; } = "No"; // Yes/No
+
+        [JsonProperty("radiologicalRisk")]
+        public string RadiologicalRisk { get; set; } = "No"; // Yes/No
+
+        [JsonProperty("hazardCategory")]
+        public string HazardCategory { get; set; } = "Category 3";
+
+        [JsonProperty("approvalDesignators")]
+        public string ApprovalDesignators { get; set; } = string.Empty;
+
+        // Design Input Record
+        [JsonProperty("designInputDocuments")]
+        public List<DocumentReference> DesignInputDocuments { get; set; } = new();
+
+        [JsonProperty("designInputConsiderations")]
+        public string DesignInputConsiderations { get; set; } = string.Empty;
+
+        // Impacted Documents
+        [JsonProperty("impactedDocumentsList")]
+        public List<DocumentReference> ImpactedDocumentsList { get; set; } = new();
+
+        // Design Output Record
+        [JsonProperty("designOutputDocuments")]
+        public List<DocumentReference> DesignOutputDocuments { get; set; } = new();
+
+        [JsonProperty("workPackageNumbers")]
+        public string WorkPackageNumbers { get; set; } = string.Empty;
+
+        [JsonProperty("otherOutputs")]
+        public string OtherOutputs { get; set; } = string.Empty;
+
+        // Additional form completion data
+        [JsonProperty("estimatedCompletionDate")]
+        public string EstimatedCompletionDate { get; set; } = string.Empty;
+
+        [JsonProperty("cacn")]
+        public string Cacn { get; set; } = string.Empty;
+
+        [JsonProperty("projectType")]
+        public string ProjectType { get; set; } = "Component Modification";
+    }
+
+    public class DocumentReference
+    {
+        [JsonProperty("documentType")]
+        public string DocumentType { get; set; } = string.Empty;
+
+        [JsonProperty("documentNumber")]
+        public string DocumentNumber { get; set; } = string.Empty;
+
+        [JsonProperty("revision")]
+        public string Revision { get; set; } = string.Empty;
+
+        [JsonProperty("title")]
+        public string Title { get; set; } = string.Empty;
     }
 }

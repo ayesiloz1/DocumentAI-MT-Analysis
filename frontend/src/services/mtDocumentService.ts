@@ -785,9 +785,12 @@ class MTDocumentService {
     console.log(`MT Document Progress: ${progress}% complete`);
   }
 
-  // Convert analysis response to document data
+  // Convert analysis response to document data with enhanced checkbox logic
   fromAnalysisResponse(analysis: MTAnalysisResponse, questionnaireData?: any): MTDocumentData {
     const now = new Date();
+    
+    // Extract enhanced document fields from backend
+    const documentFields = (analysis as any).documentFields || {};
     
     const documentData: MTDocumentData = {
       // Header Information
@@ -796,36 +799,36 @@ class MTDocumentService {
       
       // Document Information
       projectNumber: questionnaireData?.projectNumber || `MT-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
-      title: questionnaireData?.projectTitle || questionnaireData?.title || '[Modification Title - To be determined from analysis]',
+      title: questionnaireData?.projectTitle || questionnaireData?.title || documentFields.proposedSolution || '[Modification Title - To be determined from analysis]',
       facility: questionnaireData?.facility || 'Nuclear Facility',
       submittedBy: questionnaireData?.submittedBy || 'Engineering Department',
       submissionDate: now.toLocaleDateString(),
       priority: questionnaireData?.priority || 'High',
       dueDate: questionnaireData?.dueDate || '[MM/DD/YYYY]',
       
-      // Section I - Request for Modification
-      requestedCompletionDate: questionnaireData?.requestedCompletionDate || this.getIntelligentCompletionDate(questionnaireData?.designType || analysis.designType),
-      cacn: questionnaireData?.cacn || this.generateCACN(),
-      projectType: questionnaireData?.projectType || this.determineProjectType(analysis, questionnaireData),
-      relatedBuildings: questionnaireData?.relatedBuildings || this.determineRelatedBuildings(analysis, questionnaireData),
-      relatedSystems: questionnaireData?.relatedSystems || this.determineRelatedSystems(analysis, questionnaireData),
-      relatedEquipment: questionnaireData?.relatedEquipment || this.determineRelatedEquipment(analysis, questionnaireData),
+      // Section I - Request for Modification (Enhanced with intelligent extraction)
+      requestedCompletionDate: documentFields.estimatedCompletionDate || questionnaireData?.requestedCompletionDate || this.getIntelligentCompletionDate(questionnaireData?.designType || analysis.designType),
+      cacn: documentFields.cacn || questionnaireData?.cacn || this.generateCACN(),
+      projectType: documentFields.projectType || questionnaireData?.projectType || this.determineProjectType(analysis, questionnaireData),
+      relatedBuildings: documentFields.relatedBuildings || questionnaireData?.relatedBuildings || this.determineRelatedBuildings(analysis, questionnaireData),
+      relatedSystems: documentFields.relatedSystems || questionnaireData?.relatedSystems || this.determineRelatedSystems(analysis, questionnaireData),
+      relatedEquipment: documentFields.relatedEquipment || questionnaireData?.relatedEquipment || this.determineRelatedEquipment(analysis, questionnaireData),
       problemDescription: questionnaireData?.problemDescription || questionnaireData?.description || '[Detailed description of the modification]',
       
-      // Section II - Required for Design Type 1 Projects
-      projectDesignReviewRequired: questionnaireData?.projectDesignReviewRequired || 'TBD',
-      majorModificationEvaluationRequired: questionnaireData?.majorModificationEvaluationRequired || 'TBD',
-      safetyInDesignStrategyRequired: questionnaireData?.safetyInDesignStrategyRequired || 'TBD',
+      // Section II - Required for Design Type 1 Projects (Enhanced checkbox logic)
+      projectDesignReviewRequired: this.mapCheckboxValue(documentFields.projectDesignReviewRequired) || questionnaireData?.projectDesignReviewRequired || 'N/A',
+      majorModificationEvaluationRequired: this.mapCheckboxValue(documentFields.majorModificationEvaluationRequired) || questionnaireData?.majorModificationEvaluationRequired || 'N/A',
+      safetyInDesignStrategyRequired: this.mapCheckboxValue(documentFields.safetyInDesignStrategyRequired) || questionnaireData?.safetyInDesignStrategyRequired || 'N/A',
       
       // Scope of Work - Handle long AI responses properly
       description: questionnaireData?.description || this.truncateText(analysis.analysis, 500),
       justification: questionnaireData?.justification || this.truncateText(analysis.analysis, 800) || '[Provide justification for the modification]',
-      proposedSolution: questionnaireData?.proposedSolution || questionnaireData?.scopeOfWork || this.extractProposedSolution(analysis, questionnaireData) || '[Detailed description of the modification]',
+      proposedSolution: documentFields.proposedSolution || questionnaireData?.proposedSolution || questionnaireData?.scopeOfWork || this.extractProposedSolution(analysis, questionnaireData) || '[Detailed description of the modification]',
       workLocation: questionnaireData?.workLocation || '[Specific location/area]',
       
-      // Design Input Record
-      designInputs: questionnaireData?.designInputs || 'AI analysis with regulatory compliance review, Nuclear Regulatory Guidelines, DOE Standards',
-      designInputConsiderations: questionnaireData?.designInputConsiderations || 'Integration with existing plant protection system, cable routing requirements, emergency response procedures',
+      // Design Input Record (Enhanced with backend data)
+      designInputs: this.generateDesignInputsFromDocuments(documentFields.designInputDocuments) || questionnaireData?.designInputs || 'AI analysis with regulatory compliance review, Nuclear Regulatory Guidelines, DOE Standards',
+      designInputConsiderations: documentFields.designInputConsiderations || questionnaireData?.designInputConsiderations || 'Integration with existing plant protection system, cable routing requirements, emergency response procedures',
       applicableCodes: questionnaireData?.applicableCodes || 'DOE Standards, Nuclear Regulatory Guidelines, IEEE Standards for Nuclear Facilities',
       designCriteria: questionnaireData?.designCriteria || 'Safety, operability, and regulatory compliance for emergency systems',
       environmentalConditions: questionnaireData?.environmentalConditions || 'Standard nuclear facility environment with seismic qualifications',
@@ -837,13 +840,13 @@ class MTDocumentService {
       confidence: analysis.confidence,
       analysisPath: 'AI-Enhanced Analysis with Expert Review and Regulatory Compliance Check',
       designType: questionnaireData?.designType ? this.getDesignTypeString(questionnaireData.designType) : this.getDesignTypeString(analysis.designType || 2),
-      hazardCategory: analysis.safetyClassification || questionnaireData?.hazardCategory || 'Category 2',
+      hazardCategory: documentFields.hazardCategory || analysis.safetyClassification || questionnaireData?.hazardCategory || 'Category 2',
       
-      // Page 2 Risk Classifications - Use intelligent defaults based on design type and content
-      preliminarySafetyClassification: questionnaireData?.preliminarySafetyClassification || this.determineSafetyClassification(analysis, questionnaireData),
-      environmentalRisk: questionnaireData?.environmentalRisk || this.determineEnvironmentalRisk(analysis, questionnaireData),
-      radiologicalRisk: questionnaireData?.radiologicalRisk || this.determineRadiologicalRisk(analysis, questionnaireData),
-      approvalDesignators: questionnaireData?.approvalDesignators || 'Safety-Significant, Emergency System',
+      // Page 2 Risk Classifications (Enhanced intelligent checkbox logic)
+      preliminarySafetyClassification: this.mapSafetyClassification(documentFields.preliminarySafetyClassification) || questionnaireData?.preliminarySafetyClassification || this.determineSafetyClassification(analysis, questionnaireData),
+      environmentalRisk: this.mapYesNoValue(documentFields.environmentalRisk) || questionnaireData?.environmentalRisk || this.determineEnvironmentalRisk(analysis, questionnaireData),
+      radiologicalRisk: this.mapYesNoValue(documentFields.radiologicalRisk) || questionnaireData?.radiologicalRisk || this.determineRadiologicalRisk(analysis, questionnaireData),
+      approvalDesignators: documentFields.approvalDesignators || questionnaireData?.approvalDesignators || 'Safety-Significant, Emergency System',
       
       // Risk Assessment
       riskAssessment: analysis.riskAssessment ? {
@@ -862,9 +865,9 @@ class MTDocumentService {
         mitigationRecommendations: []
       },
       
-      // Design Output Record - Section VI  
-      workPackageNumbers: questionnaireData?.workPackageNumbers || '',
-      otherOutputs: questionnaireData?.otherOutputs || '',
+      // Design Output Record - Section VI (Enhanced)
+      workPackageNumbers: documentFields.workPackageNumbers || questionnaireData?.workPackageNumbers || '',
+      otherOutputs: documentFields.otherOutputs || questionnaireData?.otherOutputs || '',
       
       // Impact Assessment - Section V & VII
       safetyImpacts: questionnaireData?.safetyImpacts || '',
@@ -890,6 +893,40 @@ class MTDocumentService {
       case 5: return 'Type V - Identical Replacement';
       default: return 'Type TBD - To Be Determined';
     }
+  }
+
+  // Enhanced checkbox mapping methods
+  private mapCheckboxValue(value: string | undefined): 'Yes' | 'No' | 'N/A' | undefined {
+    if (!value) return undefined;
+    const normalizedValue = value.toLowerCase();
+    if (normalizedValue === 'yes' || normalizedValue === 'true') return 'Yes';
+    if (normalizedValue === 'no' || normalizedValue === 'false') return 'No';
+    return 'N/A';
+  }
+
+  private mapSafetyClassification(value: string | undefined): 'SC' | 'SS' | 'GS' | 'N/A' | undefined {
+    if (!value) return undefined;
+    const normalizedValue = value.toUpperCase();
+    if (['SC', 'SAFETY CLASS'].includes(normalizedValue)) return 'SC';
+    if (['SS', 'SAFETY SIGNIFICANT'].includes(normalizedValue)) return 'SS';
+    if (['GS', 'GENERAL SERVICE'].includes(normalizedValue)) return 'GS';
+    return 'N/A';
+  }
+
+  private mapYesNoValue(value: string | undefined): 'Yes' | 'No' | undefined {
+    if (!value) return undefined;
+    const normalizedValue = value.toLowerCase();
+    if (normalizedValue === 'yes' || normalizedValue === 'true') return 'Yes';
+    if (normalizedValue === 'no' || normalizedValue === 'false') return 'No';
+    return undefined;
+  }
+
+  private generateDesignInputsFromDocuments(documents: any[] | undefined): string | undefined {
+    if (!documents || !Array.isArray(documents) || documents.length === 0) return undefined;
+    
+    return documents.map(doc => 
+      `${doc.documentType || 'Document'}: ${doc.documentNumber || 'TBD'} - ${doc.title || 'Title TBD'}`
+    ).join(', ');
   }
 
   private convertChecklistSection(section: any): ChecklistItem[] {
