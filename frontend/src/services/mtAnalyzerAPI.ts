@@ -1,10 +1,8 @@
 import axios from 'axios';
 
-// Base URL for the .NET backend API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-
+// Configure API client to point to .NET backend
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: 'http://localhost:5000/api',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

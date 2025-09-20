@@ -7,6 +7,9 @@
 @import './messages.css';
 @import './input.css';
 @import './responsive.css';
+@import './chat-interface.css';
+@import './mt-analyzer.css';
+@import './starship-avatar.css';
 
 /* ===== GLOBAL VARIABLES & THEMES ===== */
 

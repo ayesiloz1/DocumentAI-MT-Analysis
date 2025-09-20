@@ -1,3 +1,6 @@
+import { dynamicFormConfig } from './dynamicFormConfig';
+import { aiProjectAnalysis } from './aiProjectAnalysis';
+
 export interface MTFormConfig {
   // Form metadata that can be configured
   formNumber?: string;
@@ -146,31 +149,32 @@ class MTDocumentService {
   private templateBuffer: ArrayBuffer | null = null;
 
   private constructor() {
-    // Set default configuration
-    this.setDefaultFormConfig();
+    // Initialize with quick config, then load dynamic config
+    this.formConfig = dynamicFormConfig.getQuickConfig();
+    this.setDefaultFormConfig().catch(error => {
+      console.warn('Could not load dynamic form config:', error);
+    });
   }
 
-  private setDefaultFormConfig(): void {
-    this.formConfig = {
-      formNumber: 'MT-50231',
-      formRevision: 'Rev.00',
-      formDate: new Date().toLocaleDateString('en-US', { 
-        month: 'numeric', 
-        day: 'numeric', 
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }),
-      formTitle: 'MODIFICATION TRAVELER',
-      pageCount: 2,
-      preparedFor: 'U.S. Department of Energy, Assistant Secretary for Environmental Management',
-      preparedBy: 'Washington River Protection Solutions, LLC., PO Box 850, Richland, WA 99352',
-      contractorInfo: 'Contractor For U.S. Department of Energy, Office of River Protection',
-      contractNumber: 'Contract DE-AC27-08RV14800',
-      formReference: 'SPF-015 (Rev.B1)',
-      disclaimer: 'Reference herein to any specific commercial product, process, or service by trade name, trademark, manufacturer, or otherwise, does not necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or any agency thereof or its contractors or subcontractors. Printed in the United States of America.'
-    };
+  private async setDefaultFormConfig(): Promise<void> {
+    try {
+      // Use dynamic form configuration instead of hardcoded values
+      const dynamicConfig = await dynamicFormConfig.generateFormConfig({
+        facilityName: this.documentData.facility,
+        facilityType: 'Nuclear',
+        operator: this.documentData.preparedBy,
+        regulatoryAuthority: 'Nuclear Regulatory Commission'
+      });
+      
+      this.formConfig = dynamicConfig;
+    } catch (error) {
+      console.error('Failed to generate dynamic form config, using fallback:', error);
+      // Fallback to minimal configuration
+      this.formConfig = dynamicFormConfig.getQuickConfig({
+        facilityName: this.documentData.facility || 'Nuclear Facility',
+        facilityType: 'Nuclear'
+      });
+    }
   }
 
   public static getInstance(): MTDocumentService {
@@ -231,7 +235,7 @@ class MTDocumentService {
     return Math.round((filledFields.length / requiredFields.length) * 100);
   }
 
-  // Generate HTML preview of the document matching the exact MT-50231 format
+  // Generate HTML preview of the document using dynamic configuration
   generatePreviewHTML(): string {
     const data = this.documentData;
     
@@ -840,7 +844,7 @@ class MTDocumentService {
       confidence: analysis.confidence,
       analysisPath: 'AI-Enhanced Analysis with Expert Review and Regulatory Compliance Check',
       designType: questionnaireData?.designType ? this.getDesignTypeString(questionnaireData.designType) : this.getDesignTypeString(analysis.designType || 2),
-      hazardCategory: documentFields.hazardCategory || analysis.safetyClassification || questionnaireData?.hazardCategory || 'Category 2',
+      hazardCategory: documentFields.hazardCategory || analysis.safetyClassification || questionnaireData?.hazardCategory || 'To be determined', // Remove hardcoded category
       
       // Page 2 Risk Classifications (Enhanced intelligent checkbox logic)
       preliminarySafetyClassification: this.mapSafetyClassification(documentFields.preliminarySafetyClassification) || questionnaireData?.preliminarySafetyClassification || this.determineSafetyClassification(analysis, questionnaireData),
@@ -1104,49 +1108,50 @@ class MTDocumentService {
   // Generate intelligent completion date based on design type
   private getIntelligentCompletionDate(designType?: number): string {
     const currentDate = new Date();
-    let monthsToAdd = 6; // Default
+    
+    // Remove hardcoded timeline logic - completion dates should be project-specific
+    let monthsToAdd = 6; // Neutral timeline - requires project planning review
 
-    switch (designType) {
-      case 1: monthsToAdd = 12; break; // Type I - New Design
-      case 2: monthsToAdd = 8; break;  // Type II - Modification
-      case 3: monthsToAdd = 6; break;  // Type III - Non-Identical Replacement
-      case 4: monthsToAdd = 3; break;  // Type IV - Temporary
-      case 5: monthsToAdd = 4; break;  // Type V - Identical Replacement
-    }
+    // TODO: Implement proper timeline calculation based on project complexity and resource availability
 
     const completionDate = new Date(currentDate.getTime() + (monthsToAdd * 30 * 24 * 60 * 60 * 1000));
     return completionDate.toISOString().split('T')[0];
   }
 
-  // Generate CACN number with intelligent defaults
-  private generateCACN(): string {
+  // Generate CACN number dynamically using AI analysis if available
+  private async generateCACN(): Promise<string> {
     const year = new Date().getFullYear();
     
-    // Check if this is related to A/AX retrieval project
-    const description = this.documentData.problemDescription || '';
-    if (description.toLowerCase().includes('a/ax retrieval') || 
-        description.toLowerCase().includes('chemical addition manifold')) {
-      return '202991'; // Known CACN for A/AX Retrieval Project
+    // Try to use AI analysis to determine appropriate CACN
+    try {
+      const quickAnalysis = await aiProjectAnalysis.quickAnalyze(this.documentData.problemDescription || '');
+      if (quickAnalysis && quickAnalysis.projectType) {
+        // Generate CACN based on AI-determined project type
+        const projectTypeCode = quickAnalysis.projectType.substring(0, 3).toUpperCase();
+        return `${year}-${projectTypeCode}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      }
+    } catch (error) {
+      console.warn('Could not generate AI-based CACN:', error);
     }
     
+    // Fallback to generic format
     return `${year}-MT-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
   }
 
-  // Determine project type based on analysis
-  private determineProjectType(analysis: MTAnalysisResponse, questionnaireData?: any): string {
-    const analysisText = (analysis.analysis || '').toLowerCase();
-    const description = (questionnaireData?.problemDescription || '').toLowerCase();
-    const combinedText = analysisText + ' ' + description;
-
-    if (combinedText.includes('a/ax retrieval') || combinedText.includes('retrieval project')) {
-      return 'Retrieval';
-    } else if (combinedText.includes('digital') || combinedText.includes('control system')) {
-      return 'Digital System Upgrade';
-    } else if (combinedText.includes('replacement')) {
-      return 'Equipment Replacement';
-    } else if (combinedText.includes('modification') || combinedText.includes('modify')) {
-      return 'Component Modification';
+  // Determine project type using AI analysis instead of hardcoded logic
+  private async determineProjectType(analysis: MTAnalysisResponse, questionnaireData?: any): Promise<string> {
+    try {
+      const combinedText = (analysis.analysis || '') + ' ' + (questionnaireData?.problemDescription || '');
+      const aiAnalysis = await aiProjectAnalysis.quickAnalyze(combinedText);
+      
+      if (aiAnalysis && aiAnalysis.projectType) {
+        return aiAnalysis.projectType;
+      }
+    } catch (error) {
+      console.warn('Could not determine project type via AI:', error);
     }
+    
+    // Fallback to generic type
     return 'Plant Modification';
   }
 

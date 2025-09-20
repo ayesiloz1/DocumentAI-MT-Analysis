@@ -3,6 +3,7 @@ import ChatInterface_Pure from './ChatInterface_Pure';
 import { DocumentAnalysisAPI } from '../services/documentAnalysisAPI';
 import { DocumentAnalysisResult } from '../types/documentAnalysis';
 import '../styles/components/index.css';
+import '../styles/components/mt-analyzer.css';
 
 // Enhanced MT Analyzer Component with PDF Analysis
 export const MTAnalyzerWrapper: React.FC = () => {
@@ -115,57 +116,24 @@ ${pdfAnalysis.suggestions.length > 3 ?
   return (
     <div className="mt-analyzer-wrapper">
       {error && (
-        <div className="analysis-error" style={{
-          background: '#fee2e2',
-          border: '1px solid #fecaca',
-          color: '#dc2626',
-          padding: '12px',
-          borderRadius: '8px',
-          margin: '16px',
-          fontSize: '14px'
-        }}>
+        <div className="analysis-error">
           ⚠️ {error}
         </div>
       )}
       
       {isAnalyzing && (
-        <div className="analysis-loading" style={{
-          background: '#dbeafe',
-          border: '1px solid #bfdbfe',
-          color: '#1d4ed8',
-          padding: '12px',
-          borderRadius: '8px',
-          margin: '16px',
-          fontSize: '14px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <div className="spinner" style={{
-            width: '16px',
-            height: '16px',
-            border: '2px solid #bfdbfe',
-            borderTop: '2px solid #1d4ed8',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
+        <div className="analysis-loading">
+          <div className="spinner"></div>
           📄 Analyzing PDF document...
         </div>
       )}
       
       {lastPdfAnalysis && (
-        <div className="pdf-analysis-summary" style={{
-          background: '#f0f9ff',
-          border: '1px solid #0ea5e9',
-          borderRadius: '8px',
-          padding: '16px',
-          margin: '16px',
-          fontSize: '14px'
-        }}>
-          <h3 style={{ margin: '0 0 12px 0', color: '#0369a1' }}>
+        <div className="pdf-analysis-summary">
+          <h3>
             📄 Latest PDF Analysis: {lastPdfAnalysis.metadata.fileName}
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+          <div className="pdf-analysis-grid">
             <div>
               <strong>Overall Score:</strong> {lastPdfAnalysis.qualityScore.overall.toFixed(1)}/100
             </div>
@@ -179,7 +147,7 @@ ${pdfAnalysis.suggestions.length > 3 ?
               <strong>Suggestions:</strong> {lastPdfAnalysis.suggestions.length}
             </div>
           </div>
-          <p style={{ margin: '0', color: '#374151' }}>
+          <p>
             <strong>Summary:</strong> {lastPdfAnalysis.summary}
           </p>
         </div>
@@ -192,13 +160,6 @@ ${pdfAnalysis.suggestions.length > 3 ?
         pendingAnalysisMessage={pendingAnalysisMessage}
         onAnalysisMessageProcessed={() => setPendingAnalysisMessage(null)}
       />
-      
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };

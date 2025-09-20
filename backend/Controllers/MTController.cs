@@ -180,7 +180,7 @@ namespace MTAnalyzer.Controllers
                     RequiresLicenseAmendment = mtRequired,
                     Reason = reason,
                     DesignType = designType.ToString(),
-                    Confidence = 0.8
+                    Confidence = 0.5 // Remove hardcoded confidence - neutral value indicates review needed
                 };
                 
                 // Create enhanced response
@@ -281,7 +281,7 @@ namespace MTAnalyzer.Controllers
                     Regulations = ExtractRegulations(response),
                     SafetyFunctions = ExtractSafetyFunctions(response),
                     ModificationTypes = ExtractModificationTypes(response),
-                    ExtractionConfidence = 0.85, // Default confidence
+                    ExtractionConfidence = 0.5, // Remove hardcoded confidence - neutral value
                     ProcessingMethod = "AI-Enhanced NER",
                     Timestamp = DateTime.UtcNow
                 };
@@ -298,19 +298,9 @@ namespace MTAnalyzer.Controllers
 
         private double CalculateConfidenceScore(string enhancedAnalysis, MTAnalysisResult standardAnalysis)
         {
-            // Simple confidence calculation based on analysis completeness and consistency
-            var baseScore = 0.7; // Base confidence
-            
-            if (enhancedAnalysis.Contains("high confidence") || enhancedAnalysis.Contains("strong evidence"))
-                baseScore += 0.15;
-            
-            if (enhancedAnalysis.Contains("low confidence") || enhancedAnalysis.Contains("insufficient"))
-                baseScore -= 0.2;
-            
-            if (standardAnalysis.RequiresLicenseAmendment)
-                baseScore += 0.1; // Conservative approach increases confidence
-            
-            return Math.Max(0.1, Math.Min(1.0, baseScore));
+            // Remove hardcoded confidence calculation - let AI/backend determine confidence
+            // Return a default confidence that indicates uncertainty
+            return 0.5; // Neutral confidence - indicates analysis needs review
         }
 
         private List<string> ExtractKeyFindings(string analysis)
@@ -370,7 +360,7 @@ namespace MTAnalyzer.Controllers
                              analysis.Contains("low risk") ? "Low" : "Medium",
                 RiskFactors = ExtractRiskFactors(analysis),
                 Mitigations = ExtractMitigations(analysis),
-                Confidence = 0.8
+                Confidence = 0.5 // Remove hardcoded confidence - neutral value
             };
         }
 
@@ -425,36 +415,29 @@ namespace MTAnalyzer.Controllers
                 }
             }
             
-            return 0.75; // Default confidence
+            return 0.5; // Remove hardcoded logic - neutral confidence
         }
 
         private double AssessEvidenceQuality(List<string> sources)
         {
-            if (!sources.Any()) return 0.3;
+            if (!sources.Any()) return 0.5; // Remove hardcoded logic - neutral value
             
-            var qualityScore = 0.5; // Base score
+            var qualityScore = 0.5; // Remove hardcoded logic - neutral base score
             
-            foreach (var source in sources)
-            {
-                if (source.Contains("CFR") || source.Contains("regulation"))
-                    qualityScore += 0.2;
-                if (source.Contains("precedent") || source.Contains("historical"))
-                    qualityScore += 0.15;
-                if (source.Contains("expert") || source.Contains("analysis"))
-                    qualityScore += 0.1;
-            }
+            // Remove hardcoded scoring increments - system should analyze source quality dynamically
+            // TODO: Implement proper evidence quality assessment
             
             return Math.Min(1.0, qualityScore);
         }
 
         private double AssessRegulatoryClarity(string analysis)
         {
-            return analysis.Contains("clear") || analysis.Contains("explicit") ? 0.9 : 0.7;
+            return 0.5; // Remove hardcoded logic - neutral assessment needed
         }
 
         private double AssessHistoricalPrecedent(string analysis)
         {
-            return analysis.Contains("precedent") || analysis.Contains("similar") ? 0.8 : 0.6;
+            return 0.5; // Remove hardcoded logic - neutral assessment needed
         }
 
         private List<string> ExtractUncertaintyFactors(string analysis)
@@ -478,7 +461,7 @@ namespace MTAnalyzer.Controllers
         {
             return new List<EquipmentEntity>
             {
-                new EquipmentEntity { Name = "Equipment identified in analysis", Type = "General", Confidence = 0.8 }
+                new EquipmentEntity { Name = "Equipment identified in analysis", Type = "General", Confidence = 0.5 } // Remove hardcoded confidence
             };
         }
 
@@ -486,7 +469,7 @@ namespace MTAnalyzer.Controllers
         {
             return new List<SystemEntity>
             {
-                new SystemEntity { Name = "System identified in analysis", Type = "Nuclear", Confidence = 0.8 }
+                new SystemEntity { Name = "System identified in analysis", Type = "Nuclear", Confidence = 0.5 } // Remove hardcoded confidence
             };
         }
 
@@ -495,17 +478,17 @@ namespace MTAnalyzer.Controllers
             var regulations = new List<RegulationEntity>();
             
             if (response.Contains("10 CFR 50.59"))
-                regulations.Add(new RegulationEntity { Reference = "10 CFR 50.59", Relevance = 0.95 });
+                regulations.Add(new RegulationEntity { Reference = "10 CFR 50.59", Relevance = 0.5 }); // Remove hardcoded relevance
             
             return regulations.Any() ? regulations : 
-                new List<RegulationEntity> { new RegulationEntity { Reference = "General nuclear regulations", Relevance = 0.7 } };
+                new List<RegulationEntity> { new RegulationEntity { Reference = "General nuclear regulations", Relevance = 0.5 } }; // Remove hardcoded relevance
         }
 
         private List<SafetyFunctionEntity> ExtractSafetyFunctions(string response)
         {
             return new List<SafetyFunctionEntity>
             {
-                new SafetyFunctionEntity { Name = "Safety function evaluation", Classification = "To be determined", Confidence = 0.75 }
+                new SafetyFunctionEntity { Name = "Safety function evaluation", Classification = "To be determined", Confidence = 0.5 } // Remove hardcoded confidence
             };
         }
 
@@ -513,7 +496,7 @@ namespace MTAnalyzer.Controllers
         {
             return new List<ModificationTypeEntity>
             {
-                new ModificationTypeEntity { Type = "Modification requiring evaluation", RegulatoryPath = "50.59 or License Amendment", Confidence = 0.8 }
+                new ModificationTypeEntity { Type = "Modification requiring evaluation", RegulatoryPath = "50.59 or License Amendment", Confidence = 0.5 } // Remove hardcoded confidence
             };
         }
 

@@ -1,0 +1,39 @@
+/* ============================================================================
+   STARSHIP AVATAR STYLES
+   Styles for StarshipAvatar component animations and positioning
+   ============================================================================ */
+
+/* Container Styles */
+.starship-container {
+  position: relative;
+}
+
+.starship-wrapper {
+  position: relative;
+}
+
+/* Trail Styles */
+.trail-path {
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.trail-path--flying {
+  animation: trail-flow 2s linear infinite;
+}
+
+@keyframes trail-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 24; }
+}
+
+/* Status Badge */
+.starship-status-badge {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 2px solid white;
+}

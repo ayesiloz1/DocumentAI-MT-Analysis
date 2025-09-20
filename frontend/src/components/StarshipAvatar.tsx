@@ -1,4 +1,5 @@
 import React from "react";
+import '../styles/components/starship-avatar.css';
 
 // StarshipAvatar.tsx
 // A self-contained React component that renders a
@@ -36,7 +37,7 @@ export default function StarshipAvatar({ isFlying = false, onComplete, size = 64
   return (
     <div
       aria-hidden
-      className="pointer-events-none"
+      className="starship-container"
       style={{ width: containerSize, height: containerSize, position: "relative" }}
     >
       {/* Floating container (centered) */}
@@ -144,8 +145,7 @@ export default function StarshipAvatar({ isFlying = false, onComplete, size = 64
 
       {/* small badge or status dot */}
       <div
-        style={{ position: "absolute", right: 2, bottom: 2 }}
-        className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-white"
+        className="starship-status-badge"
         aria-hidden
       />
     </div>

@@ -190,7 +190,7 @@ namespace MTAnalyzer.Models
         public string RadiologicalRisk { get; set; } = "No"; // Yes/No
 
         [JsonProperty("hazardCategory")]
-        public string HazardCategory { get; set; } = "Category 3";
+        public string HazardCategory { get; set; } = "To be determined"; // Remove hardcoded category
 
         [JsonProperty("approvalDesignators")]
         public string ApprovalDesignators { get; set; } = string.Empty;

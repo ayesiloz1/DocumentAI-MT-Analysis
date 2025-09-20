@@ -1004,11 +1004,8 @@ Maintain professional expertise while being conversational and supportive.";
 
         private string DetermineHazardCategory(int designType, string analysis, string userInput)
         {
-            if (IsCriticalSafetyEquipment(userInput.ToLowerInvariant(), ""))
-                return "Category 1";
-            if (IsSafetySignificantEquipment(userInput.ToLowerInvariant(), ""))
-                return "Category 2";
-            return "Category 3";
+            // Remove hardcoded category assignments - should be determined through proper analysis
+            return "To be determined"; // Requires safety analysis evaluation
         }
 
         private string DetermineApprovalDesignators(int designType, string analysis, string userInput)
@@ -1094,15 +1091,9 @@ Maintain professional expertise while being conversational and supportive.";
         private string CalculateCompletionDate(int designType, string userInput)
         {
             var baseDate = DateTime.Now;
-            var completionDate = designType switch
-            {
-                1 => baseDate.AddMonths(18), // Type I - 18 months
-                2 => baseDate.AddMonths(12), // Type II - 12 months
-                3 => baseDate.AddMonths(9),  // Type III - 9 months
-                4 => baseDate.AddMonths(3),  // Type IV - 3 months
-                5 => baseDate.AddMonths(6),  // Type V - 6 months
-                _ => baseDate.AddMonths(12)
-            };
+            
+            // Remove hardcoded timeline logic - completion dates should be project-specific
+            var completionDate = baseDate.AddMonths(6); // Neutral timeline, requires planning review
 
             return completionDate.ToString("yyyy-MM-dd");
         }
@@ -1204,7 +1195,7 @@ Maintain professional expertise while being conversational and supportive.";
                 MTRequired = true, // Conservative approach
                 MTRequiredReason = fallbackReason,
                 DesignType = fallbackType,
-                Confidence = 0.3, // Low confidence for fallback
+                Confidence = 0.5, // Remove hardcoded logic - neutral fallback confidence
                 SuggestedActions = new List<string> 
                 { 
                     "Manual engineering review required",

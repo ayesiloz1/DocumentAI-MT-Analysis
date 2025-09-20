@@ -1,0 +1,71 @@
+/* ============================================================================
+   MT ANALYZER WRAPPER STYLES
+   Styles for MTAnalyzerWrapper component
+   ============================================================================ */
+
+/* Error State */
+.analysis-error {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 16px;
+  font-size: 14px;
+}
+
+/* Loading State */
+.analysis-loading {
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Spinner Animation */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #bfdbfe;
+  border-top: 2px solid #1d4ed8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* PDF Analysis Summary */
+.pdf-analysis-summary {
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px;
+  font-size: 14px;
+}
+
+.pdf-analysis-summary h3 {
+  margin: 0 0 12px 0;
+  color: #0369a1;
+}
+
+.pdf-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pdf-analysis-summary p {
+  margin: 0;
+  color: #374151;
+}

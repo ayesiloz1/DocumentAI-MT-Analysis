@@ -705,7 +705,7 @@ export async function createMTTemplate(data?: Partial<MTDocumentData>): Promise<
                 new TableCell({
                   children: [
                     new Paragraph({ children: [new TextRun({ text: "17. Hazard Category", bold: true })] }),
-                    new Paragraph({ children: [new TextRun({ text: data?.hazardCategory || "Category 3" })] }),
+                    new Paragraph({ children: [new TextRun({ text: data?.hazardCategory || "To be determined" })] }), // Remove hardcoded category
                     new Paragraph({ children: [new TextRun({ text: "18. Approval Designators", bold: true })] }),
                     new Paragraph({ children: [new TextRun({ text: (data as any)?.approvalDesignators || "Standard Modification" })] }),
                   ],

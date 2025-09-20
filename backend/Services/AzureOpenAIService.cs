@@ -406,17 +406,11 @@ Provide analysis in JSON format with arrays for missingElements, inconsistencies
 
         private double CalculateConfidence(MTAnalysisReport report)
         {
-            double confidence = 0.8; // Base confidence
+            // Remove hardcoded confidence logic - should be dynamic based on actual analysis quality
+            double confidence = 0.5; // Neutral base confidence
 
-            // Increase confidence if key fields are populated
-            if (!string.IsNullOrEmpty(report.ProjectNumber)) confidence += 0.05;
-            if (report.DesignInputs.DesignConstraints.Any()) confidence += 0.05;
-            if (!string.IsNullOrEmpty(report.DesignInputs.ProblemStatement)) confidence += 0.05;
-            if (!string.IsNullOrEmpty(report.DesignInputs.ProposedSolution)) confidence += 0.05;
-
-            // Decrease confidence if there are many missing elements
-            if (report.MissingElements.Count > 3) confidence -= 0.1;
-            if (report.Inconsistencies.Count > 2) confidence -= 0.1;
+            // TODO: Implement proper confidence assessment based on analysis quality
+            // rather than hardcoded field presence checks
 
             return Math.Max(0.0, Math.Min(1.0, confidence));
         }

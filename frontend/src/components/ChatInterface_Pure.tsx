@@ -9,147 +9,22 @@
 // IMPORT STATEMENTS - EXTERNAL LIBRARIES AND COMPONENTS
 // ============================================================================
 import React, { useState, useRef, useEffect } from 'react'; // React hooks for state and lifecycle management
-import { Send, FileUp, Bot, User, AlertCircle, CheckCircle, FileText, Copy, Edit } from 'lucide-react'; // Icon components
-import ReactMarkdown from 'react-markdown';  // Component to render Markdown text as HTML
+import { Bot, FileText, FileUp, Send } from 'lucide-react'; // Icon components
 import MTDocumentModal from './MTDocumentModal'; // Custom modal component for displaying MT documents
+import { ChatMessage, type Message } from './ChatMessage';
+import { ChatSidebar, type ChatHistory } from './ChatSidebar';
+import { SpaceshipAnimation } from './SpaceshipAnimation';
+import { ChatInput } from './ChatInput';
+import { extractModificationTitle, extractProjectNumber } from '../utils/dataExtraction';
+import { aiProjectAnalysis } from '../services/aiProjectAnalysis';
 import '../styles/components/index.css'; // Import CSS styles
-
-// ============================================================================
-// HELPER FUNCTIONS FOR INTELLIGENT DATA EXTRACTION
-// These functions parse user messages and AI responses to extract meaningful information
-// for pre-filling MT document fields automatically
-// ============================================================================
-
-/**
- * Extracts modification title from user message and AI response
- * Uses pattern matching to identify common modification types
- * @param userMessage - The user's input message
- * @param aiResponse - The AI's response message
- * @returns Extracted title or default based on content analysis
- */
-function extractModificationTitle(userMessage: string, aiResponse: string): string {
-  // Convert to lowercase for easier pattern matching
-  const message = userMessage.toLowerCase();
-  const response = aiResponse.toLowerCase();
-  const fullText = (userMessage + ' ' + aiResponse).toLowerCase();
-  
-  // ============================================================================
-  // PATTERN MATCHING FOR SPECIFIC EQUIPMENT TYPES
-  // These patterns identify common nuclear plant equipment modifications
-  // ============================================================================
-  
-  // Enhanced RCP (Reactor Coolant Pump) valve extraction with specific valve IDs
-  if (message.includes('reactor coolant pump') || message.includes('rcp')) {
-    if (message.includes('seal injection') || message.includes('flow control valve')) {
-      // Look for specific valve ID using regex pattern
-      const valveMatch = fullText.match(/fcv[-_]?(\d+[a-z]?)/i);
-      if (valveMatch) {
-        const valveId = valveMatch[0].toUpperCase(); // Convert to standard format
-        if (fullText.includes('digital') || fullText.includes('smart valve')) {
-          return `RCP Seal Injection Flow Control Valve ${valveId} Digital Replacement`;
-        }
-        return `RCP Seal Injection Flow Control Valve ${valveId} Replacement`;
-      }
-      return 'RCP Seal Injection Flow Control Valve Digital Replacement';
-    }
-    return 'Reactor Coolant Pump Modification';
-  }
-  
-  // Emergency Diesel Generator modifications
-  if (message.includes('emergency diesel generator') || message.includes('edg')) {
-    return 'Emergency Diesel Generator Control Panel Upgrade';
-  }
-  
-  // Motor replacement modifications
-  if (message.includes('motor') && message.includes('replace')) {
-    if (message.includes('emergency core cooling') || message.includes('eccs')) {
-      return 'Emergency Core Cooling System Motor Replacement';
-    }
-    if (message.includes('westinghouse') && message.includes('abb')) {
-      return 'Motor Replacement - Westinghouse to ABB';
-    }
-    return 'Motor Replacement Modification';
-  }
-  
-  // Valve replacement modifications with ID extraction
-  if (message.includes('valve') && message.includes('replace')) {
-    // Look for specific valve ID in general valve replacements
-    const valveMatch = fullText.match(/[a-z]{2,4}[-_]?(\d+[a-z]?)/i);
-    if (valveMatch) {
-      const valveId = valveMatch[0].toUpperCase();
-      return `Control Valve ${valveId} Replacement`;
-    }
-    return 'Valve Replacement Modification';
-  }
-  
-  if (message.includes('control panel') || message.includes('upgrade')) {
-    return 'Control System Upgrade';
-  }
-  
-  // Default extraction from first significant keywords
-  const keywords = userMessage.split(' ').filter(word => 
-    word.length > 3 && 
-    !['with', 'from', 'this', 'that', 'need', 'want', 'have'].includes(word.toLowerCase())
-  ).slice(0, 4);
-  
-  if (keywords.length > 0) {
-    return keywords.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + ' Modification';
-  }
-  
-  return 'Equipment Modification';
-}
-
-function extractProjectNumber(userMessage: string, aiResponse: string): string {
-  const currentDate = new Date();
-  const year = currentDate.getFullYear();
-  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-  const day = String(currentDate.getDate()).padStart(2, '0');
-  
-  // Check for specific equipment types to create meaningful project numbers
-  const message = userMessage.toLowerCase();
-  
-  if (message.includes('reactor coolant pump') || message.includes('rcp')) {
-    return `RCP-${year}-${month}${day}`;
-  }
-  
-  if (message.includes('emergency diesel generator') || message.includes('edg')) {
-    return `EDG-CTRL-${year}-001`;
-  }
-  
-  if (message.includes('motor') && message.includes('emergency core cooling')) {
-    return `ECCS-MOTOR-${year}-${month}${day}`;
-  }
-  
-  if (message.includes('valve') && (message.includes('flow control') || message.includes('cvcs'))) {
-    return `CVCS-VALVE-${year}-${month}${day}`;
-  }
-  
-  // Default project number format
-  return `MT-${year}-${month}${day}-001`;
-}
+import '../styles/components/chat-interface.css'; // Import chat interface specific styles
 
 interface MTAnalysisRequest {
   problemDescription?: string;
   isPhysicalChange?: boolean;
   isTemporary?: boolean;
   projectNumber?: string;
-}
-
-interface Message {
-  id: string;
-  text: string;
-  sender: 'user' | 'ai';
-  timestamp: Date;
-  type?: 'text' | 'file' | 'analysis';
-  metadata?: any;
-}
-
-interface ChatHistory {
-  id: string;
-  title: string;
-  messages: Message[];
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 interface ChatInterfaceProps {
@@ -290,7 +165,8 @@ Simply ask questions or upload documents to get started. What can I help you ana
     console.log('Using pure GPT-4 intelligence for all analysis');
     
     try {
-      const response = await fetch('http://localhost:5000/api/mt/intelligent-chat', {
+      // Call the .NET backend directly
+      const response = await fetch('http://localhost:5000/api/MT/intelligent-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -371,7 +247,7 @@ Simply ask questions or upload documents to get started. What can I help you ana
               mtData.projectDesignReviewRequired = 'No';
               mtData.majorModificationEvaluationRequired = 'No';
               mtData.safetyInDesignStrategyRequired = 'No';
-              mtData.hazardCategory = 'Category 3'; // Like-for-like replacements typically Category 3
+              // Remove hardcoded hazard category assignment
             } else if (fullText.includes('digital') || fullText.includes('analog to digital') ||
                 fullText.includes('50.59') || fullText.includes('smart valve') || 
                 fullText.includes('digital smart valve') || fullText.includes('smart motor-operated') ||
@@ -380,14 +256,14 @@ Simply ask questions or upload documents to get started. What can I help you ana
               mtData.projectDesignReviewRequired = 'Yes';
               mtData.majorModificationEvaluationRequired = 'Yes';
               mtData.safetyInDesignStrategyRequired = 'Yes';
-              mtData.hazardCategory = 'Category 2'; // Digital modifications typically Category 2
+              // Remove hardcoded hazard category assignment
             } else if (fullText.includes('type i') || fullText.includes('type 1') || 
                       fullText.includes('design type 1')) {
               mtData.designType = 1; // Pass as number for proper checkbox selection
               mtData.projectDesignReviewRequired = 'Yes';
               mtData.majorModificationEvaluationRequired = 'Yes';
               mtData.safetyInDesignStrategyRequired = 'Yes';
-              mtData.hazardCategory = 'Category 2';
+              // Remove hardcoded hazard category assignment
             } else if (fullText.includes('type iii') || fullText.includes('type 3') ||
                       fullText.includes('design type 3')) {
               mtData.designType = 3; // Pass as number for proper checkbox selection
@@ -402,31 +278,13 @@ Simply ask questions or upload documents to get started. What can I help you ana
               mtData.designType = 2; // Pass as number for proper checkbox selection
             }
             
-            // Set intelligent completion dates based on project complexity
-            const currentDate = new Date();
-            let estimatedMonths = 6; // Default
+            // Remove hardcoded timeline estimation - let backend or user determine dates
+            // Keep completion dates as empty for user input
+            mtData.requestedCompletionDate = '';
+            mtData.estimatedCompleteDate = '';
+            mtData.dueDate = '';
             
-            if (mtData.designType === 'Type I') {
-              estimatedMonths = 12; // Type I projects are more complex
-            } else if (fullText.includes('replacement') && !fullText.includes('digital')) {
-              estimatedMonths = 4; // Simple replacements
-            } else if (fullText.includes('digital') || fullText.includes('software')) {
-              estimatedMonths = 8; // Digital upgrades need more time
-            }
-            
-            const completionDate = new Date(currentDate.getTime() + (estimatedMonths * 30 * 24 * 60 * 60 * 1000));
-            mtData.requestedCompletionDate = completionDate.toISOString().split('T')[0];
-            mtData.estimatedCompleteDate = completionDate.toISOString().split('T')[0];
-            mtData.dueDate = completionDate.toISOString().split('T')[0];
-            
-            // Look for hazard categories
-            if (responseText.includes('category 1') || responseText.includes('cat 1')) {
-              mtData.hazardCategory = 'Category 1';
-            } else if (responseText.includes('category 2') || responseText.includes('cat 2')) {
-              mtData.hazardCategory = 'Category 2';
-            } else if (responseText.includes('category 3') || responseText.includes('cat 3')) {
-              mtData.hazardCategory = 'Category 3';
-            }
+            // Remove hardcoded hazard category detection - let backend or user determine
             
             // Extract project number if mentioned in response (but don't override our intelligent extraction)
             const projectMatch = originalResponse.match(/project\s+(?:number\s+)?([A-Z0-9-]+)/i);
@@ -434,13 +292,7 @@ Simply ask questions or upload documents to get started. What can I help you ana
               mtData.projectNumber = projectMatch[1];
             }
             
-            // Extract timeline information
-            if (responseText.includes('6 months') || message.toLowerCase().includes('6 months')) {
-              const currentDate = new Date();
-              const endDate = new Date(currentDate.getTime() + (6 * 30 * 24 * 60 * 60 * 1000)); // 6 months
-              mtData.requestedCompletionDate = endDate.toISOString().split('T')[0];
-              mtData.estimatedCompleteDate = endDate.toISOString().split('T')[0];
-            }
+            // Remove hardcoded timeline extraction - let user set dates
             
             // Set facility and submission info
             const facilityMatch = message.match(/unit\s+(\d+)/i);
@@ -448,54 +300,41 @@ Simply ask questions or upload documents to get started. What can I help you ana
             mtData.submittedBy = 'Engineering Department';
             mtData.submissionDate = new Date().toISOString().split('T')[0];
             
-            // Intelligently determine related systems and equipment based on conversation
-            const messageLower = message.toLowerCase();
-            if (messageLower.includes('emergency diesel generator') || messageLower.includes('edg')) {
-              mtData.relatedSystems = 'Emergency Diesel Generator System';
-              mtData.relatedBuildings = `${mtData.facility} Emergency Power Building`;
-              mtData.relatedEquipment = 'Emergency Diesel Generator, Control Panels, Cable Runs';
-              mtData.priority = 'High';
-              mtData.projectType = 'Safety System Upgrade';
-              mtData.cacn = 'EDG-CTRL-2025';
-            } else if (messageLower.includes('reactor coolant pump') || messageLower.includes('rcp') || 
-                      messageLower.includes('seal injection') || messageLower.includes('fcv-')) {
-              mtData.relatedSystems = 'Chemical Volume Control System (CVCS), Reactor Coolant System (RCS)';
-              mtData.relatedBuildings = 'Reactor Building, Auxiliary Building';
-              mtData.relatedEquipment = 'Reactor Coolant Pump, Flow Control Valve FCV-001, CVCS Components';
-              mtData.priority = 'High';
-              mtData.projectType = 'Safety System Component Replacement';
-              mtData.cacn = 'RCS-VALVE-2025';
-            } else if (messageLower.includes('emergency core cooling') || messageLower.includes('eccs')) {
-              mtData.relatedSystems = 'Emergency Core Cooling System (ECCS)';
-              mtData.relatedBuildings = 'Reactor Building, Auxiliary Building';
-              mtData.relatedEquipment = 'ECCS Motors, Pumps, Valves';
-              mtData.priority = 'High';
-              mtData.projectType = 'Safety System Component Replacement';
-              mtData.cacn = 'ECCS-MOTOR-2025';
-            } else if (messageLower.includes('reactor coolant system') || messageLower.includes('valve') && messageLower.includes('safety-critical')) {
-              mtData.relatedSystems = 'Reactor Coolant System (RCS), Plant Protection System';
-              mtData.relatedBuildings = 'Reactor Building';
-              mtData.relatedEquipment = 'Safety-Critical Valve, Associated Piping, Control Systems';
-              mtData.priority = 'High';
-              mtData.projectType = 'Safety System Component Replacement';
-              mtData.cacn = 'RCS-SAFETY-2025';
-            } else {
-              // Generic defaults with more specific placeholders
-              mtData.relatedSystems = 'To Be Determined During Engineering Review';
-              mtData.relatedBuildings = 'To Be Determined During Site Survey';
-              mtData.relatedEquipment = 'To Be Determined During Component Analysis';
-              mtData.priority = 'Medium';
-              mtData.projectType = 'Component Modification';
-              mtData.cacn = 'TBD-2025';
-            }
-            
-            // Enhanced project type refinement for more specific descriptions
-            if (fullText.includes('replacement') && fullText.includes('valve') && mtData.projectType !== 'Safety System Component Replacement') {
-              mtData.projectType = 'Component Replacement';
-            } else if (fullText.includes('upgrade') && mtData.projectType === '[Project Type]') {
-              mtData.projectType = 'System Upgrade';
-            } else if (fullText.includes('installation') && mtData.projectType === '[Project Type]') {
-              mtData.projectType = 'New Installation';
+            // Use AI analysis to determine project details instead of hardcoded mappings
+            let analysisResult = null;
+            try {
+              analysisResult = await aiProjectAnalysis.analyzeProject({
+                problemDescription: message,
+                conversationContext: messages.map(m => m.text).join('\n'),
+                facility: mtData.facility || 'Nuclear Facility',
+                additionalContext: { fullText }
+              });
+              
+              // Apply AI analysis results
+              mtData.relatedSystems = analysisResult.relatedSystems;
+              mtData.relatedBuildings = analysisResult.relatedBuildings;
+              mtData.relatedEquipment = analysisResult.relatedEquipment;
+              mtData.priority = analysisResult.priority;
+              mtData.projectType = analysisResult.projectType;
+              mtData.cacn = analysisResult.cacn;
+              
+              // Add AI-generated additional fields
+              mtData.safetyClassification = analysisResult.safetyClassification;
+              mtData.estimatedComplexity = analysisResult.estimatedComplexity;
+              mtData.recommendedApproach = analysisResult.recommendedApproach;
+              mtData.aiConfidence = analysisResult.confidence;
+              
+            } catch (error) {
+              console.error('AI project analysis failed, using fallback:', error);
+              
+              // Minimal fallback - let AI analysis service handle this
+              const fallbackResult = await aiProjectAnalysis.quickAnalyze(message);
+              mtData.relatedSystems = fallbackResult.relatedSystems || 'Analysis pending';
+              mtData.relatedBuildings = 'To be determined through detailed analysis';
+              mtData.relatedEquipment = 'To be determined through detailed analysis';
+              mtData.priority = fallbackResult.priority || 'Medium';
+              mtData.projectType = fallbackResult.projectType || 'Modification';
+              mtData.cacn = `${new Date().getFullYear()}-MT-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
             }
             
             // Set MT requirement based on safety classification
@@ -503,37 +342,22 @@ Simply ask questions or upload documents to get started. What can I help you ana
               mtData.mtRequired = true;
             }
             
-            // Add analysis result as justification and proposed solution
-            mtData.justification = `Analysis Result: ${originalResponse.slice(0, 300)}...`;
+            // Add analysis result as justification
+            mtData.justification = `AI Analysis Result: ${originalResponse.slice(0, 300)}...`;
             
-            // Enhanced proposed solution based on specific scenarios
-            if (messageLower.includes('chemical addition manifold') && messageLower.includes('frame')) {
-              if (messageLower.includes('off-site') || messageLower.includes('offsite')) {
-                mtData.proposedSolution = 'Vendor to provide analysis and modifications (as necessary) to the support structure of the manifold to support off-site fabrication and ensure structural integrity during hoisting, rigging, and shipping operations.';
-              } else {
-                mtData.proposedSolution = 'Modify chemical addition manifold frame design to meet structural requirements for installation and operational loads.';
-              }
-            } else if (messageLower.includes('replace') && messageLower.includes('motor')) {
-              mtData.proposedSolution = 'Replace existing motor with equivalent or improved motor maintaining all safety functions and performance characteristics.';
-            } else if (messageLower.includes('upgrade') && messageLower.includes('control')) {
-              mtData.proposedSolution = 'Upgrade analog control system to digital control and monitoring system with enhanced alarm capabilities and remote monitoring features.';
-            } else if ((messageLower.includes('valve') && messageLower.includes('replace')) || messageLower.includes('fcv-')) {
-              if (messageLower.includes('digital') || messageLower.includes('smart')) {
-                mtData.proposedSolution = 'Replace existing analog flow control valve with digital smart valve featuring enhanced precision control, remote monitoring capabilities, and improved diagnostics while maintaining all safety functions and regulatory compliance per IEEE standards.';
-              } else {
-                mtData.proposedSolution = 'Replace existing valve with functionally equivalent valve maintaining all safety and operational requirements.';
-              }
-            } else if (messageLower.includes('seal injection') || messageLower.includes('rcp')) {
-              mtData.proposedSolution = 'Replace existing RCP seal injection flow control valve with enhanced digital control valve to improve system reliability and control precision while maintaining Safety Class classification.';
+            // Generate proposed solution using AI analysis instead of hardcoded logic
+            if (analysisResult && analysisResult.recommendedApproach) {
+              mtData.proposedSolution = analysisResult.recommendedApproach;
             } else {
-              mtData.proposedSolution = '[Detailed description of the modification]';
+              // Fallback to AI-generated solution based on project type
+              mtData.proposedSolution = `Implement ${mtData.projectType.toLowerCase()} following nuclear industry standards and regulatory requirements. Detailed engineering analysis and safety review required to determine specific implementation approach.`;
             }
             
             // Update the document service with live data
-            console.log('🚀 Sending data to MT Document Service:', mtData);
+            console.log('🚀 Sending AI-analyzed data to MT Document Service:', mtData);
             mtDocumentService.updateDocument(mtData);
             setCurrentMTData(mtData);
-            console.log('Live MT document updated with parsed analysis data:', mtData);
+            console.log('Live MT document updated with AI-analyzed data:', mtData);
           } catch (error) {
             console.warn('Could not update MT document service:', error);
           }
@@ -1003,25 +827,6 @@ Simply ask questions or upload documents to get started. What can I help you ana
               <button
                 onClick={showDocumentPreview}
                 className="mt-document-btn"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  marginTop: '8px',
-                  backgroundColor: '#0066cc',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0052a3'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0066cc'}
                 title="View MT Document Live Preview"
               >
                 <FileText className="w-4 h-4" />
@@ -1163,184 +968,13 @@ Simply ask questions or upload documents to get started. What can I help you ana
         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
 
         {messages.map((message, index) => (
-          <div
+          <ChatMessage
             key={message.id}
-            className={`flex items-start space-x-3 ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}
-          >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-              message.sender === 'user' ? 'bg-gray-600' : 'bg-blue-600'
-            }`}>
-              {message.sender === 'user' ? (
-                <User className="w-4 h-4" />
-              ) : (
-                <Bot className="w-4 h-4" />
-              )}
-            </div>
-            
-            <div className={`flex-1 p-4 rounded-lg ${
-              message.type === 'analysis' || (message.sender === 'ai' && message.text.length > 500)
-                ? 'max-w-none lg:max-w-4xl'  // Wider for analysis messages
-                : 'max-w-xs lg:max-w-md xl:max-w-lg'  // Standard width for regular messages
-            } ${
-              message.sender === 'user' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-white border shadow-sm'
-            }`}>
-              {message.type === 'file' && (
-                <div className={`flex items-center space-x-2 mb-2 p-2 rounded ${
-                  message.sender === 'user' ? 'bg-blue-700' : 'bg-gray-100'
-                }`}>
-                  <FileUp className="w-4 h-4" />
-                  <span className="text-sm font-medium">File uploaded: {message.text}</span>
-                </div>
-              )}
-              
-              <div className={`${
-                message.type === 'analysis' || (message.sender === 'ai' && message.text.length > 500)
-                  ? 'text-sm leading-relaxed' // Better spacing for long content
-                  : 'text-sm'
-              } ${message.sender === 'user' ? 'text-white' : 'text-gray-800'}`}>
-                <ReactMarkdown
-                  components={{
-                    // Enhanced table styling
-                    table: ({children}) => (
-                      <table className="min-w-full border-collapse border border-gray-300 my-4">
-                        {children}
-                      </table>
-                    ),
-                    th: ({children}) => (
-                      <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-semibold text-left">
-                        {children}
-                      </th>
-                    ),
-                    td: ({children}) => (
-                      <td className="border border-gray-300 px-4 py-2">
-                        {children}
-                      </td>
-                    ),
-                    // Enhanced heading styles
-                    h2: ({children}) => (
-                      <h2 className="text-lg font-bold mt-6 mb-3 text-blue-700">
-                        {children}
-                      </h2>
-                    ),
-                    h3: ({children}) => (
-                      <h3 className="text-base font-semibold mt-4 mb-2 text-gray-700">
-                        {children}
-                      </h3>
-                    ),
-                    // Better spacing for lists and paragraphs
-                    p: ({children}) => (
-                      <p className="mb-3 leading-relaxed">
-                        {children}
-                      </p>
-                    ),
-                    hr: () => (
-                      <hr className="my-4 border-gray-300" />
-                    ),
-                    // Code blocks
-                    code: ({children}) => (
-                      <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">
-                        {children}
-                      </code>
-                    )
-                  }}
-                >
-                  {message.text}
-                </ReactMarkdown>
-              </div>
-              
-              <div className={`flex items-center justify-between mt-2 ${
-                message.sender === 'user' ? 'text-blue-200' : 'text-gray-500'
-              }`}>
-                <div className="text-xs">
-                  {message.timestamp.toLocaleTimeString()}
-                </div>
-                
-                {/* Action Buttons - exclude all buttons from first welcome message */}
-                {index > 0 && (
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleCopyMessage(message.text)}
-                      className={`p-1 rounded hover:bg-opacity-80 transition-colors ${
-                        message.sender === 'user' 
-                          ? 'hover:bg-blue-700 text-blue-200 hover:text-white' 
-                          : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
-                      }`}
-                      title="Copy message"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </button>
-                    
-                    {/* Edit button only for user messages */}
-                    {message.sender === 'user' && (
-                      <button
-                        onClick={() => handleEditMessage(message.text)}
-                        className="p-1 rounded hover:bg-blue-700 text-blue-200 hover:text-white transition-colors"
-                        title="Edit message"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </button>
-                    )}
-                    
-                    {/* Additional buttons for AI messages */}
-                    {message.sender === 'ai' && (
-                      <>
-                        <button
-                          onClick={() => {
-                            const utterance = new SpeechSynthesisUtterance(message.text);
-                            speechSynthesis.speak(utterance);
-                          }}
-                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                          title="Read aloud"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 7h4l5-5v20l-5-5H5a1 1 0 01-1-1V8a1 1 0 011-1z" />
-                          </svg>
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            console.log('Retry response for:', message.text);
-                          }}
-                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                          title="Retry response"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            console.log('Marked as helpful:', message.text);
-                          }}
-                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                          title="Mark as helpful"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V9a2 2 0 00-2-2V5a2 2 0 00-2-2 2 2 0 00-2 2v6.5z" />
-                          </svg>
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            console.log('Marked as unhelpful:', message.text);
-                          }}
-                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                          title="Mark as unhelpful"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v2a2 2 0 002 2v2a2 2 0 002 2 2 2 0 002-2v-6.5z" />
-                          </svg>
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            message={message}
+            index={index}
+            onCopyMessage={handleCopyMessage}
+            onEditMessage={handleEditMessage}
+          />
         ))}
 
         <div ref={messagesEndRef} />

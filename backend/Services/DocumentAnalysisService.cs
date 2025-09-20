@@ -239,7 +239,7 @@ namespace MTAnalyzer.Services
                         StartPosition = match.Index,
                         Length = match.Length,
                         Severity = GetGrammarIssueSeverity(pattern.Key),
-                        Confidence = 0.8
+                        Confidence = 0.5 // Remove hardcoded confidence
                     });
                 }
             }
