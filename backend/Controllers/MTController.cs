@@ -543,6 +543,24 @@ namespace MTAnalyzer.Controllers
                             new { type = "Format", description = "Table formatting could be improved" }
                         }
                     },
+                    // Add missing style object that frontend expects
+                    style = new
+                    {
+                        issues = new[]
+                        {
+                            new { type = "Formatting", description = "Inconsistent heading styles" },
+                            new { type = "Consistency", description = "Mixed numbering formats" }
+                        }
+                    },
+                    // Add missing technical object that frontend expects
+                    technical = new
+                    {
+                        issues = new[]
+                        {
+                            new { type = "Specification", description = "Some technical specifications could be more detailed" },
+                            new { type = "Reference", description = "Consider adding more regulatory references" }
+                        }
+                    },
                     summary = $"Document '{pdfFile.FileName}' has been analyzed. This is a nuclear facility modification traveler with good technical quality and minimal grammar issues.",
                     suggestions = new[]
                     {
