@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // REACT CLIENT COMPONENT DIRECTIVE
 // 'use client' tells Next.js this is a client-side component that runs in the browser
 // This is required for components that use React hooks and browser APIs
@@ -163,9 +163,17 @@ interface ChatInterfaceProps {
     status: string;
     analysis?: any;
   }>) => void;
+  pendingAnalysisMessage?: string | null;
+  onAnalysisMessageProcessed?: () => void;
 }
 
-export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenariosUpdate }: ChatInterfaceProps) {
+export default function ChatInterface({ 
+  onSendMessage, 
+  onAnalyzeFile, 
+  onScenariosUpdate, 
+  pendingAnalysisMessage, 
+  onAnalysisMessageProcessed 
+}: ChatInterfaceProps) {
   // Chat History State Management
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string>('');
@@ -232,11 +240,42 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
     scrollToBottom();
   }, [messages]);
 
+  // Effect to handle pending analysis messages from PDF processing
+  useEffect(() => {
+    if (pendingAnalysisMessage && onAnalysisMessageProcessed) {
+      const analysisMessage: Message = {
+        id: Date.now().toString(),
+        text: pendingAnalysisMessage,
+        sender: 'ai',
+        timestamp: new Date(),
+        type: 'analysis'
+      };
+      
+      setMessages(prev => [...prev, analysisMessage]);
+      onAnalysisMessageProcessed();
+    }
+  }, [pendingAnalysisMessage, onAnalysisMessageProcessed]);
+
   useEffect(() => {
     if (!isInitialized) {
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        text: "# MT Analyzer Assistant\n\n**Welcome to the Modification Traveler Analysis System**\n\nI'm your AI assistant for MT document analysis and regulatory compliance. I can help you with:\n\n• **Document Analysis** - Upload and analyze MT documents\n• **Decision Tree Guidance** - Navigate Figure 1 requirements\n• **Safety Classifications** - Determine proper safety assignments\n• **Design Assessment** - Evaluate modification complexity\n• **Regulatory Compliance** - Ensure MT standards adherence\n\nSimply ask questions or upload documents to get started. What can I help you analyze today?",
+        text: `# MT Analyzer Assistant
+**Welcome to the Modification Traveler Analysis System**
+
+I'm your AI assistant for MT document analysis and regulatory compliance. I can help you with:
+
+• **Document Analysis** - Upload and analyze MT documents
+
+• **Decision Tree Guidance** - Navigate Figure 1 requirements
+
+• **Safety Classifications** - Determine proper safety assignments
+
+• **Design Assessment** - Evaluate modification complexity
+
+• **Regulatory Compliance** - Ensure MT standards adherence
+
+Simply ask questions or upload documents to get started. What can I help you analyze today?`,
         sender: 'ai',
         timestamp: new Date(),
         type: 'text'
@@ -1122,30 +1161,6 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-        {messages.length === 0 && (
-          <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-              <Bot className="w-4 h-4" />
-            </div>
-            <div className="flex-1 bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center space-x-2 mb-2">
-                <Bot className="w-5 h-5 text-emerald-600" />
-                <span className="font-semibold text-gray-800">MT Analysis Assistant</span>
-              </div>
-              <div className="text-sm text-gray-600 mb-3">Powered by Azure OpenAI GPT-4</div>
-              <div className="text-sm text-gray-700">
-                Hello! I'm your MT Analyzer Assistant. I can help you analyze Modification Traveler documents and determine MT requirements. You can:
-                <ul className="mt-2 space-y-1 list-disc list-inside text-gray-600">
-                  <li>Ask questions about MT requirements</li>
-                  <li>Upload MT documents for analysis</li>
-                  <li>Get guidance on Figure 1 decision tree</li>
-                  <li>Review safety classifications and design types</li>
-                </ul>
-                How can I help you today?
-              </div>
-            </div>
-          </div>
-        )}
 
         {messages.map((message, index) => (
           <div
@@ -1162,7 +1177,11 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
               )}
             </div>
             
-            <div className={`flex-1 p-4 rounded-lg max-w-xs lg:max-w-md xl:max-w-lg ${
+            <div className={`flex-1 p-4 rounded-lg ${
+              message.type === 'analysis' || (message.sender === 'ai' && message.text.length > 500)
+                ? 'max-w-none lg:max-w-4xl'  // Wider for analysis messages
+                : 'max-w-xs lg:max-w-md xl:max-w-lg'  // Standard width for regular messages
+            } ${
               message.sender === 'user' 
                 ? 'bg-blue-600 text-white' 
                 : 'bg-white border shadow-sm'
@@ -1176,8 +1195,59 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
                 </div>
               )}
               
-              <div className={`text-sm ${message.sender === 'user' ? 'text-white' : 'text-gray-800'}`}>
-                <ReactMarkdown>{message.text}</ReactMarkdown>
+              <div className={`${
+                message.type === 'analysis' || (message.sender === 'ai' && message.text.length > 500)
+                  ? 'text-sm leading-relaxed' // Better spacing for long content
+                  : 'text-sm'
+              } ${message.sender === 'user' ? 'text-white' : 'text-gray-800'}`}>
+                <ReactMarkdown
+                  components={{
+                    // Enhanced table styling
+                    table: ({children}) => (
+                      <table className="min-w-full border-collapse border border-gray-300 my-4">
+                        {children}
+                      </table>
+                    ),
+                    th: ({children}) => (
+                      <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-semibold text-left">
+                        {children}
+                      </th>
+                    ),
+                    td: ({children}) => (
+                      <td className="border border-gray-300 px-4 py-2">
+                        {children}
+                      </td>
+                    ),
+                    // Enhanced heading styles
+                    h2: ({children}) => (
+                      <h2 className="text-lg font-bold mt-6 mb-3 text-blue-700">
+                        {children}
+                      </h2>
+                    ),
+                    h3: ({children}) => (
+                      <h3 className="text-base font-semibold mt-4 mb-2 text-gray-700">
+                        {children}
+                      </h3>
+                    ),
+                    // Better spacing for lists and paragraphs
+                    p: ({children}) => (
+                      <p className="mb-3 leading-relaxed">
+                        {children}
+                      </p>
+                    ),
+                    hr: () => (
+                      <hr className="my-4 border-gray-300" />
+                    ),
+                    // Code blocks
+                    code: ({children}) => (
+                      <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">
+                        {children}
+                      </code>
+                    )
+                  }}
+                >
+                  {message.text}
+                </ReactMarkdown>
               </div>
               
               <div className={`flex items-center justify-between mt-2 ${
@@ -1396,3 +1466,4 @@ export default function ChatInterface({ onSendMessage, onAnalyzeFile, onScenario
   </div>
 );
 }
+

@@ -75,6 +75,12 @@ builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 // Register Intelligent MT Service - main service that uses GPT-4 for smart document analysis
 builder.Services.AddScoped<IIntelligentMTService, IntelligentMTService>();
 
+// Register PDF Processing Service - handles PDF text extraction and validation
+builder.Services.AddScoped<IPdfProcessingService, PdfProcessingService>();
+
+// Register Document Analysis Service - comprehensive document quality analysis
+builder.Services.AddScoped<IDocumentAnalysisService, DocumentAnalysisService>();
+
 // Configure logging for the application
 // Logging helps debug issues and monitor application behavior
 builder.Services.AddLogging(loggingBuilder =>
