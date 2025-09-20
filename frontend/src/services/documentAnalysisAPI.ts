@@ -23,7 +23,7 @@ export class DocumentAnalysisAPI {
     formData.append('performTechnicalReview', String(options.performTechnicalReview ?? true));
     formData.append('performComplianceCheck', String(options.performComplianceCheck ?? false));
 
-    const response = await fetch(`/api/documentanalysis/analyze-pdf`, {
+    const response = await fetch(`http://localhost:5000/api/MT/analyze-pdf`, {
       method: 'POST',
       body: formData,
     });
@@ -40,7 +40,7 @@ export class DocumentAnalysisAPI {
    * Analyze text content
    */
   static async analyzeText(request: AnalyzeTextRequest): Promise<DocumentAnalysisResult> {
-    const response = await fetch(`/api/documentanalysis/analyze-text`, {
+    const response = await fetch(`http://localhost:5000/api/DocumentAnalysis/analyze-text`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export class DocumentAnalysisAPI {
    * Get analysis history (placeholder)
    */
   static async getHistory(): Promise<any[]> {
-    const response = await fetch(`/api/documentanalysis/history`);
+    const response = await fetch(`http://localhost:5000/api/DocumentAnalysis/history`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

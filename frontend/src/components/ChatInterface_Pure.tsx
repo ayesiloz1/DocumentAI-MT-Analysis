@@ -17,8 +17,7 @@ import { SpaceshipAnimation } from './SpaceshipAnimation';
 import { ChatInput } from './ChatInput';
 import { extractModificationTitle, extractProjectNumber } from '../utils/dataExtraction';
 import { aiProjectAnalysis } from '../services/aiProjectAnalysis';
-import '../styles/components/index.css'; // Import CSS styles
-import '../styles/components/chat-interface.css'; // Import chat interface specific styles
+import '../styles/components/index.css'; // Import CSS styles (includes all components)
 
 interface MTAnalysisRequest {
   problemDescription?: string;
